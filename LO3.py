@@ -100,19 +100,23 @@ def makeSounds(leftHz, rightHz):
 # It will display the outputs in the right order using the x axis data
 def get_two_hands_y_position(hand1,hand2):
     if hand1[0] < hand2[0]:
-        print hand1[1],
+        '''print hand1[1],
         print '           ',
         print hand2[1]
         print
-        print
+        print'''
+        print 'Frequencies:'
+        print 'Left:', hand1[1]*2, 'Hz\tRight:', hand2[1]*2, 'Hz'
         makeSounds(hand1[1],hand2[1])
         
     else:
-        print hand2[1],
+        '''print hand2[1],
         print '           ',
         print hand1[1]
         print
-        print
+        print'''
+        print 'Frequencies:'
+        print 'Left:', hand2[1]*2, 'Hz\tRight:', hand1[1]*2, 'Hz'
         makeSounds(hand2[1],hand1[1])
 
 
