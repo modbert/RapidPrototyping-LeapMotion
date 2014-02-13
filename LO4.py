@@ -27,12 +27,14 @@ import numpy
 s = Server().boot()
 a = Sine(440, 1, 0.5).out()
 
+lastFreq = 440
+
 
 class SampleListener(Leap.Listener):
 
-
     def on_init(self, controller):
         s.start()
+        lastFreq = 440
         print "Initialized"
 
     def on_connect(self, controller):
@@ -52,13 +54,18 @@ class SampleListener(Leap.Listener):
         #print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
         #      frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
 
-        if not frame.hands.is_empty:
+        if (len(frame.hands) == 2):
             # Get the first hand
             hand1 = frame.hands[0]
             # Get the Second Hand
             hand2 = frame.hands[1]
+            if (not s.getIsStarted()):
+                s.start()
             # Get palm position and pass it to function
             get_two_hands_y_position(hand1.palm_position,hand2.palm_position)
+        else:
+            if s.getIsStarted():
+                s.stop()
 
 
 def initPyGame():
@@ -74,7 +81,9 @@ def initPyGame():
     pass
 
 def makeSounds(leftHz, rightHz):
-    a.setFreq(leftHz*2)
+    a.setFreq(rightHz+400)
+    a.mul = 1.0 - float(leftHz/450.0)
+
 
 # This function prints the height of each hand (max 2)
 # It will display the outputs in the right order using the x axis data
