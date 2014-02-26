@@ -62,9 +62,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <Library Include="lib\Leap.lib" />
     <Library Include="lib\Win32\Debug\portaudio_x86.lib" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Leap.h" />
+    <ClInclude Include="include\LeapMath.h" />
     <ClInclude Include="include\pa_asio.h" />
     <ClInclude Include="include\pa_win_ds.h" />
     <ClInclude Include="include\pa_win_wasapi.h" />

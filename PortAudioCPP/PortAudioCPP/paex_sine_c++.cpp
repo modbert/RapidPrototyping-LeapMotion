@@ -44,6 +44,8 @@
 #include <stdio.h>
 #include <math.h>
 #include "include\portaudio.h"
+#include "include\Leap.h"
+#include "include\LeapMath.h"
 
 #define NUM_SECONDS   (5)
 #define SAMPLE_RATE   (64100)
@@ -53,12 +55,169 @@
 #define M_PI  (3.14159265)
 #endif
 
-#define TABLE_SIZE   (1024)
+#define TABLE_SIZE   (10000)
+
+using namespace Leap;
+
+int shift = 1;
+
+class SampleListener : public Listener {
+  public:
+    virtual void onInit(const Controller&);
+    virtual void onConnect(const Controller&);
+    virtual void onDisconnect(const Controller&);
+    virtual void onExit(const Controller&);
+    virtual void onFrame(const Controller&);
+    virtual void onFocusGained(const Controller&);
+    virtual void onFocusLost(const Controller&);
+};
+
+void SampleListener::onInit(const Controller& controller) {
+  std::cout << "Initialized" << std::endl;
+}
+
+void SampleListener::onConnect(const Controller& controller) {
+  std::cout << "Connected" << std::endl;
+  controller.enableGesture(Gesture::TYPE_CIRCLE);
+  controller.enableGesture(Gesture::TYPE_KEY_TAP);
+  controller.enableGesture(Gesture::TYPE_SCREEN_TAP);
+  controller.enableGesture(Gesture::TYPE_SWIPE);
+
+}
+
+void SampleListener::onDisconnect(const Controller& controller) {
+  //Note: not dispatched when running in a debugger.
+  std::cout << "Disconnected" << std::endl;
+}
+
+void SampleListener::onExit(const Controller& controller) {
+  std::cout << "Exited" << std::endl;
+}
+
+void SampleListener::onFrame(const Controller& controller) {
+  // Get the most recent frame and report some basic information
+  const Frame frame = controller.frame();
+  std::cout << "Frame id: " << frame.id()
+            << ", timestamp: " << frame.timestamp()
+            << ", hands: " << frame.hands().count()
+            << ", fingers: " << frame.fingers().count()
+            << ", tools: " << frame.tools().count()
+            << ", gestures: " << frame.gestures().count() << std::endl;
+
+  if (!frame.hands().isEmpty()) {
+    // Get the first hand
+    const Hand hand = frame.hands()[0];
+
+    // Check if the hand has any fingers
+    const FingerList fingers = hand.fingers();
+    if (!fingers.isEmpty()) {
+      // Calculate the hand's average finger tip position
+      Vector avgPos;
+      for (int i = 0; i < fingers.count(); ++i) {
+        avgPos += fingers[i].tipPosition();
+      }
+      avgPos /= (float)fingers.count();
+      /*std::cout << "Hand has " << fingers.count()
+                << " fingers, average finger tip position" << avgPos << std::endl;*/
+    }
+
+    // Get the hand's sphere radius and palm position
+    /*std::cout << "Hand sphere radius: " << hand.sphereRadius()
+              << " mm, palm position: " << hand.palmPosition() << std::endl;*/
+
+	shift = hand.palmPosition().y/10;
+	std::cout << "Shift: " << shift << std::endl;
+
+    // Get the hand's normal vector and direction
+    const Vector normal = hand.palmNormal();
+    const Vector direction = hand.direction();
+
+    // Calculate the hand's pitch, roll, and yaw angles
+    /*std::cout << "Hand pitch: " << direction.pitch() * RAD_TO_DEG << " degrees, "
+              << "roll: " << normal.roll() * RAD_TO_DEG << " degrees, "
+              << "yaw: " << direction.yaw() * RAD_TO_DEG << " degrees" << std::endl;*/
+  }
+
+  // Get gestures
+  const GestureList gestures = frame.gestures();
+  for (int g = 0; g < gestures.count(); ++g) {
+    Gesture gesture = gestures[g];
+
+    switch (gesture.type()) {
+      case Gesture::TYPE_CIRCLE:
+      {
+        CircleGesture circle = gesture;
+        std::string clockwiseness;
+
+        if (circle.pointable().direction().angleTo(circle.normal()) <= PI/4) {
+          clockwiseness = "clockwise";
+        } else {
+          clockwiseness = "counterclockwise";
+        }
+
+        // Calculate angle swept since last frame
+        float sweptAngle = 0;
+        if (circle.state() != Gesture::STATE_START) {
+          CircleGesture previousUpdate = CircleGesture(controller.frame(1).gesture(circle.id()));
+          sweptAngle = (circle.progress() - previousUpdate.progress()) * 2 * PI;
+        }
+        std::cout << "Circle id: " << gesture.id()
+                  << ", state: " << gesture.state()
+                  << ", progress: " << circle.progress()
+                  << ", radius: " << circle.radius()
+                  << ", angle " << sweptAngle * RAD_TO_DEG
+                  <<  ", " << clockwiseness << std::endl;
+        break;
+      }
+      case Gesture::TYPE_SWIPE:
+      {
+        SwipeGesture swipe = gesture;
+        std::cout << "Swipe id: " << gesture.id()
+          << ", state: " << gesture.state()
+          << ", direction: " << swipe.direction()
+          << ", speed: " << swipe.speed() << std::endl;
+        break;
+      }
+      case Gesture::TYPE_KEY_TAP:
+      {
+        KeyTapGesture tap = gesture;
+        std::cout << "Key Tap id: " << gesture.id()
+          << ", state: " << gesture.state()
+          << ", position: " << tap.position()
+          << ", direction: " << tap.direction()<< std::endl;
+        break;
+      }
+      case Gesture::TYPE_SCREEN_TAP:
+      {
+        ScreenTapGesture screentap = gesture;
+        std::cout << "Screen Tap id: " << gesture.id()
+        << ", state: " << gesture.state()
+        << ", position: " << screentap.position()
+        << ", direction: " << screentap.direction()<< std::endl;
+        break;
+      }
+      default:
+        std::cout << "Unknown gesture type." << std::endl;
+        break;
+    }
+  }
+
+  if (!frame.hands().isEmpty() || !gestures.isEmpty()) {
+    std::cout << std::endl;
+  }
+}
+
+void SampleListener::onFocusGained(const Controller& controller) {
+  std::cout << "Focus Gained" << std::endl;
+}
+
+void SampleListener::onFocusLost(const Controller& controller) {
+  std::cout << "Focus Lost" << std::endl;
+}
 
 class Sine
 {
 public:
-	int shift;
     Sine() : stream(0), left_phase(0), right_phase(0)
     {
         /* initialise sinusoidal wavetable */
@@ -73,7 +232,6 @@ public:
     bool open(PaDeviceIndex index)
     {
         PaStreamParameters outputParameters;
-		shift = 1;
 
         outputParameters.device = index;
         if (outputParameters.device == paNoDevice) {
@@ -165,10 +323,8 @@ private:
         {
             *out++ = sine[left_phase];  /* left */
             *out++ = sine[right_phase];  /* right */
-            left_phase += 1;
+            left_phase += shift;
             if( left_phase >= TABLE_SIZE ) left_phase -= TABLE_SIZE;
-			shift++;
-			shift %= 10;
             right_phase += shift; /* higher pitch so we can distinguish left and right. */
             if( right_phase >= TABLE_SIZE ) right_phase -= TABLE_SIZE;
         }
@@ -223,6 +379,9 @@ int main(void)
 {
     PaError err;
     Sine sine;
+	// Create a sample listener and controller
+	SampleListener listener;
+	Controller controller;
 
     printf("PortAudio Test: output sine wave. SR = %d, BufSize = %d\n", SAMPLE_RATE, FRAMES_PER_BUFFER);
     
@@ -233,17 +392,29 @@ int main(void)
     {
         if (sine.start())
         {
-            printf("Play for %d seconds.\n", NUM_SECONDS );
-            Pa_Sleep( NUM_SECONDS * 1000 );
-
-            sine.stop();
+            //printf("Play for %d seconds.\n", NUM_SECONDS );
+            //Pa_Sleep( NUM_SECONDS * 1000 );
+			printf("Started sine wave\n");
+            //sine.stop();
         }
 
-        sine.close();
+        //sine.close();
     }
 
-    Pa_Terminate();
-    printf("Test finished.\n");
+    //Pa_Terminate();
+    //printf("Test finished.\n");
+
+	
+
+	// Have the sample listener receive events from the controller
+	controller.addListener(listener);
+
+	// Keep this process running until Enter is pressed
+	std::cout << "Press Enter to quit..." << std::endl;
+	std::cin.get();
+
+	// Remove the sample listener when done
+	controller.removeListener(listener);
     
     return err;
 

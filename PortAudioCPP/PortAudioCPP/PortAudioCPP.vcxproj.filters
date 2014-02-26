@@ -18,6 +18,9 @@
     <Library Include="lib\Win32\Debug\portaudio_x86.lib">
       <Filter>Resource Files</Filter>
     </Library>
+    <Library Include="lib\Leap.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\pa_asio.h">
@@ -39,6 +42,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\portaudio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Leap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LeapMath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
