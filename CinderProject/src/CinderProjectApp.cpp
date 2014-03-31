@@ -5,6 +5,7 @@
 
 #include "Cinder-LeapMotion.h"
 
+
 class CinderProjectApp : public ci::app::AppNative 
 {
  public:

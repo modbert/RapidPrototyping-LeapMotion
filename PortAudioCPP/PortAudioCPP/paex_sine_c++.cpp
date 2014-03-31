@@ -125,7 +125,7 @@ void SampleListener::onFrame(const Controller& controller) {
     /*std::cout << "Hand sphere radius: " << hand.sphereRadius()
               << " mm, palm position: " << hand.palmPosition() << std::endl;*/
 
-	shift = hand.palmPosition().y/10;
+	shift = hand.palmPosition().y/10 + 50;
 	std::cout << "Shift: " << shift << std::endl;
 
     // Get the hand's normal vector and direction

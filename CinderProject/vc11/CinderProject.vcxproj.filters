@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -32,9 +33,6 @@
     <ClCompile Include="..\src\CinderProjectApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Desktop\cinder_0.8.5_vc2012\blocks\leap\src\Cinder-LeapMotion.cpp">
-      <Filter>Blocks\LeapMotion\src</Filter>
-    </ClCompile>
     <ClInclude Include="..\..\Desktop\cinder_0.8.5_vc2012\blocks\leap\src\Cinder-LeapMotion.h">
       <Filter>Blocks\LeapMotion\src</Filter>
     </ClInclude>
@@ -44,6 +42,9 @@
     <ClInclude Include="..\..\Desktop\cinder_0.8.5_vc2012\blocks\leap\src\LeapMath.h">
       <Filter>Blocks\LeapMotion\src</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\cinder_0.8.5_vc2012\blocks\leap\src\Cinder-LeapMotion.cpp">
+      <Filter>Blocks\LeapMotion\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
