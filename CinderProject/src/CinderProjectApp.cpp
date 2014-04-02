@@ -1,81 +1,369 @@
-#include "cinder/app/AppNative.h"
-#include "cinder/Camera.h"
-#include "cinder/gl/gl.h"
-#include "cinder/gl/Texture.h"
+/*
+* 
+* Copyright (c) 2013, Ban the Rewind
+* All rights reserved.
+* 
+* Redistribution and use in source and binary forms, with or 
+* without modification, are permitted provided that the following 
+* conditions are met:
+* 
+* Redistributions of source code must retain the above copyright 
+* notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright 
+* notice, this list of conditions and the following disclaimer in 
+* the documentation and/or other materials provided with the 
+* distribution.
+* 
+* Neither the name of the Ban the Rewind nor the names of its 
+* contributors may be used to endorse or promote products 
+* derived from this software without specific prior written 
+* permission.
+* 
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
+* FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
+* COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+* 
+*/
 
+#include "cinder/app/AppBasic.h"
+#include "cinder/gl/Texture.h"
+#include "cinder/params/Params.h"
 #include "Cinder-LeapMotion.h"
 
-
-class CinderProjectApp : public ci::app::AppNative 
+class UiApp : public ci::app::AppBasic
 {
- public:
-	void 					draw();
-	void 					setup();
- private:	
-	Leap::Frame		mFrame;
-	LeapMotion::DeviceRef	mLeap;
+public:
+	void					draw();
+	void					prepareSettings( ci::app::AppBasic::Settings* settings );
+	void					resize();
+	void					setup();
+	void					update();
+private:
+	// Leap
+	Leap::Frame				mFrame;
+	LeapMotion::DeviceRef	mDevice;
 	void 					onFrame( Leap::Frame frame );
+	ci::Vec2f				warpPointable( const Leap::Pointable& p );
+	ci::Vec2f				warpVector( const Leap::Vector& v );
 
-	ci::CameraPersp			mCamera;
+	// Cursor
+	enum
+	{
+		GRAB, HAND, TOUCH, NONE
+	} typedef CursorType;
+	ci::Vec2f				mCursorPosition;
+	ci::Vec2f				mCursorPositionTarget;
+	CursorType				mCursorType;
+	ci::Vec2f				mFingerTipPosition;
+	ci::gl::Texture			mTexture[ 3 ];
+
+	// UI
+	ci::gl::Texture			mButton[ 3 ][ 2 ];
+	ci::Vec2f				mButtonPosition[ 3 ];
+	bool					mButtonState[ 3 ];
+	ci::gl::Texture			mSlider;
+	ci::Vec2f				mSliderPosition;
+	ci::gl::Texture			mTrack;
+	ci::Vec2f				mTrackPosition;
+
+	// Params
+	float					mFrameRate;
+	bool					mFullScreen;
+	ci::params::InterfaceGl	mParams;
+
+	// timer
+	ci::Timer				timer;
+	bool					anyPressed;
+
+	// Save screen shot
+	void					screenShot();
 };
 
+#include "cinder/ImageIo.h"
+#include "cinder/Utilities.h"
+#include "Resources.h"
+
+// Imports
 using namespace ci;
 using namespace ci::app;
+using namespace LeapMotion;
 using namespace std;
 
-void CinderProjectApp::draw() 
+// Render
+void UiApp::draw()
 {
 	// Clear window
 	gl::setViewport( getWindowBounds() );
-	gl::clear( Colorf::black() );
-	gl::setMatrices( mCamera );
-	
-	// Iterate through hands
-	const Leap::HandList& hands = mFrame.hands();
-	for ( Leap::HandList::const_iterator handIter = hands.begin(); handIter != hands.end(); ++handIter ) {
-		const Leap::Hand& hand = *handIter;
+	gl::clear( Colorf::white() );
+	gl::setMatricesWindow( getWindowSize() );
+	gl::color( ColorAf::white() );
 
-		// Draw palm
-		gl::color(1, .2, .4, 1);
-		gl::drawSphere(LeapMotion::toVec3f(hand.palmPosition()),20,12);
+	// Make PNG backgrounds transparent
+	gl::enableAlphaBlending();
+	gl::disableDepthRead();
+	gl::disableDepthWrite();
 
-		// Pointables
-		const Leap::PointableList& pointables = hand.pointables();
-		for ( Leap::PointableList::const_iterator pointIter = pointables.begin(); pointIter != pointables.end(); ++pointIter ) {
-			const Leap::Pointable& pointable = *pointIter;
+	// Master offset
+	gl::pushMatrices();
 
-			Vec3f dir		= LeapMotion::toVec3f( pointable.direction() );
-			float length	= pointable.length();
-			Vec3f tipPos	= LeapMotion::toVec3f( pointable.tipPosition() );
-			Vec3f basePos	= tipPos + dir * length;
-			
+	// Draw buttons
+	for ( size_t i = 0; i < 3; ++i ) {
+		bool pressed = mButtonState[ i ];
+		if (pressed && !anyPressed)
+		{
+			anyPressed = true;
+			timer.start();
+		}
+		gl::pushMatrices();
+		gl::translate( mButtonPosition[ i ] );
+		gl::draw( mButton[i][ pressed ? 1 : 0 ] );
+		gl::popMatrices();
+	}
 
-			gl::drawColorCube( tipPos, Vec3f( 20, 20, 20 ) );
-			gl::color( ColorAf::gray( 0.8f ) );
-			gl::drawLine( basePos, tipPos );
+	if (!mButtonState[0] && !mButtonState[1] && !mButtonState[2])
+	{
+		anyPressed = false;
+		timer.stop();
+	}
+
+	gl::popMatrices();
+
+	// Draw finger position for pressing buttons
+	if ( mCursorType == CursorType::TOUCH )
+	{
+		gl::color( ColorAf( 0.0f, 0.0f, 0.0f ) );
+		gl::drawSolidCircle( mFingerTipPosition, 26.0f );
+
+		if (timer.getSeconds() >= 3.0f && anyPressed == true)
+		{
+			gl::color( ColorAf( 0.0f, 0.8f, 0.0f ) );
+		}
+		else
+		{
+			gl::color( ColorAf( 1.0f, 0.7f, 0.0f ) );
+		}
+
+		gl::drawSolidCircle( mFingerTipPosition, 20.0f );
+
+		if (anyPressed && timer.getSeconds() < 3.0f)
+		{
+			gl::drawStringCentered(std::to_string(3-(int)timer.getSeconds()), Vec2f(mFingerTipPosition.x, mFingerTipPosition.y - 10.0f),cinder::ColorA(0,0,0,1),cinder::Font("Arial", 30.0f));
 		}
 	}
+
+	// Draw the interface
+	//mParams.draw();
 }
 
-void CinderProjectApp::onFrame( Leap::Frame frame )
+// Called when Leap frame data is ready
+void UiApp::onFrame( Leap::Frame frame )
 {
 	mFrame = frame;
 }
 
-void CinderProjectApp::setup()
-{	 
-	// Set up OpenGL
-	gl::enableAlphaBlending();
-	gl::enableDepthRead();
-	gl::enableDepthWrite();
-	
-	// Set up camera
-	mCamera = CameraPersp( getWindowWidth(), getWindowHeight(), 60.0f, 0.01f, 1000.0f );
-	mCamera.lookAt( Vec3f( 0.0f, 125.0f, 500.0f ), Vec3f( 0.0f, 250.0f, 0.0f ) );
-	
-	// Start device
-	mLeap = LeapMotion::Device::create();
-	mLeap->connectEventHandler( &CinderProjectApp::onFrame, this );
+// Prepare window
+void UiApp::prepareSettings( Settings *settings )
+{
+	settings->setWindowSize( 1024, 768 );
+	settings->setFrameRate( 60.0f );
 }
 
-CINDER_APP_NATIVE( CinderProjectApp, RendererGl )
+// Take screen shot
+void UiApp::screenShot()
+{
+#if defined( CINDER_MSW )
+	fs::path path = getAppPath();
+#else
+	fs::path path = getAppPath().parent_path();
+#endif
+	writeImage( path / fs::path( "frame" + toString( getElapsedFrames() ) + ".png" ), copyWindowSurface() );
+}
+
+// Handles window resize
+void UiApp::resize()
+{
+	// Initialize buttons
+	float h = (float)getWindowHeight() * 0.25f;
+	float w = (float)getWindowWidth() * 0.5f;
+	Vec2f position( w, h );
+	position -= Vec2f( mButton[0][ 0 ].getSize() ) * 0.5f;
+	for ( size_t i = 0; i < 3; ++i, position.y += h ) {
+		mButtonPosition[ i ]	= position;
+		mButtonState[ i ]		= false;
+	}
+}
+
+// Set up
+void UiApp::setup()
+{
+	glShadeModel( GL_FLAT );
+
+	// Start device
+	mDevice 		= Device::create();
+	mDevice->connectEventHandler( &UiApp::onFrame, this );
+
+	// Load cursor textures
+	for ( size_t i = 0; i < 3; ++i ) {
+		switch ( (CursorType)i ) {
+			case CursorType::GRAB:
+				mTexture[ i ] = gl::Texture( loadImage( loadResource( RES_TEX_GRAB ) ) );
+				break;
+			case CursorType::HAND:
+				mTexture[ i ] = gl::Texture( loadImage( loadResource( RES_TEX_HAND ) ) );
+				break;
+			case CursorType::TOUCH:
+				mTexture[ i ] = gl::Texture( loadImage( loadResource( RES_TEX_TOUCH ) ) );
+				break;
+			case NONE:
+				break;
+		}
+		mTexture[ i ].setMagFilter( GL_NEAREST );
+		mTexture[ i ].setMinFilter( GL_NEAREST );
+	}
+
+	// Initialize cursor
+	mCursorType				= CursorType::NONE;
+	mCursorPosition			= Vec2f::zero();
+	mCursorPositionTarget	= Vec2f::zero();
+	mFingerTipPosition		= Vec2i::zero();
+
+	// Load UI textures
+	mButton[0][ 0 ]	= gl::Texture( loadImage( loadResource( RES_TEX_MNV_OFF ) ) );
+	mButton[0][ 1 ]	= gl::Texture( loadImage( loadResource( RES_TEX_MNV_ON ) ) );
+	mButton[1][ 0 ]	= gl::Texture( loadImage( loadResource( RES_TEX_VRV_OFF ) ) );
+	mButton[1][ 1 ]	= gl::Texture( loadImage( loadResource( RES_TEX_VRV_ON ) ) );
+	mButton[2][ 0 ]	= gl::Texture( loadImage( loadResource( RES_TEX_SETTINGS_OFF ) ) );
+	mButton[2][ 1 ]	= gl::Texture( loadImage( loadResource( RES_TEX_SETTINGS_ON ) ) );
+
+	mSlider			= gl::Texture( loadImage( loadResource( RES_TEX_SLIDER ) ) );
+	mTrack			= gl::Texture( loadImage( loadResource( RES_TEX_TRACK ) ) );
+
+	// Disable anti-aliasing
+	mButton[0][ 0 ].setMagFilter( GL_NEAREST );
+	mButton[0][ 0 ].setMinFilter( GL_NEAREST );
+	mButton[0][ 1 ].setMagFilter( GL_NEAREST );
+	mButton[0][ 1 ].setMinFilter( GL_NEAREST );
+	mButton[1][ 0 ].setMagFilter( GL_NEAREST );
+	mButton[1][ 0 ].setMinFilter( GL_NEAREST );
+	mButton[1][ 1 ].setMagFilter( GL_NEAREST );
+	mButton[1][ 1 ].setMinFilter( GL_NEAREST );
+	mButton[2][ 0 ].setMagFilter( GL_NEAREST );
+	mButton[2][ 0 ].setMinFilter( GL_NEAREST );
+	mButton[2][ 1 ].setMagFilter( GL_NEAREST );
+	mButton[2][ 1 ].setMinFilter( GL_NEAREST );
+
+	mSlider.setMagFilter( GL_NEAREST );
+	mSlider.setMinFilter( GL_NEAREST );
+	mTrack.setMagFilter( GL_NEAREST );
+	mTrack.setMinFilter( GL_NEAREST );
+
+	// Params
+	mFrameRate	= 0.0f;
+	mFullScreen	= false;
+	mParams = params::InterfaceGl( "Params", Vec2i( 200, 105 ) );
+	mParams.addParam( "Frame rate",		&mFrameRate,						"", true );
+	mParams.addParam( "Full screen",	&mFullScreen,						"key=f"		);
+	mParams.addButton( "Screen shot",	bind( &UiApp::screenShot, this ),	"key=space" );
+	mParams.addButton( "Quit",			bind( &UiApp::quit, this ),			"key=q" );
+
+	// Run resize to initialize layout
+	resize();
+}
+
+// Runs update logic
+void UiApp::update()
+{
+	// Update frame rate
+	mFrameRate = getAverageFps();
+
+	// Toggle fullscreen
+	if ( mFullScreen != isFullScreen() ) {
+		setFullScreen( mFullScreen );
+	}
+
+	// Interact with first hand
+	const Leap::HandList& hands = mFrame.hands();
+	if ( hands.isEmpty() ) {
+		mCursorType		= CursorType::NONE;
+	} else {
+		const Leap::Hand& hand = *hands.begin();
+
+		// Update cursor position
+		mCursorPositionTarget	= warpVector( hand.palmPosition() );
+		if ( mCursorType == CursorType::NONE ) {
+			mCursorPosition = mCursorPositionTarget;
+		}
+
+		// Choose cursor type based on number of exposed fingers
+		switch ( hand.fingers().count() ) {
+			case 0:
+				mCursorType	= CursorType::GRAB;
+
+				// Slider
+				if ( mSlider.getBounds().contains( mCursorPosition - mSliderPosition ) ) {
+					float x1			= mTrackPosition.x;
+					float x2			= mTrackPosition.x + (float)( mTrack.getWidth() - mSlider.getWidth() );
+					mSliderPosition.x	= math<float>::clamp( mCursorPosition.x, x1, x2 );
+				}
+				break;
+			case 1:
+				mCursorType	= CursorType::TOUCH;
+
+				// Buttons
+				mFingerTipPosition = warpPointable( *hand.fingers().begin() );
+				for ( size_t i = 0; i < 3; ++i ) {
+					mButtonState[ i ] = false;
+					if ( mButton[i][ 0 ].getBounds().contains( mFingerTipPosition - mButtonPosition[ i ] ) ) {
+						mButtonState[ i ] = true;
+					}
+				}
+				break;
+			default:
+				mCursorType	= CursorType::HAND;
+				break;
+		}
+	}
+
+	// Smooth cursor animation
+	mCursorPosition = mCursorPosition.lerp( 0.21f, mCursorPositionTarget );
+}
+
+// Maps pointable's ray to the screen in pixels
+Vec2f UiApp::warpPointable( const Leap::Pointable& p )
+{
+	Vec3f result	= Vec3f::zero();
+	if ( mDevice ) {
+		const Leap::Screen& screen = mDevice->getController()->locatedScreens().closestScreenHit( p );
+
+		result		= LeapMotion::toVec3f( screen.intersect( p, true, 1.0f ) );
+	}
+	result			*= Vec3f( Vec2f( getWindowSize() ), 0.0f );
+	result.y		= (float)getWindowHeight() - result.y;
+	return result.xy();
+}
+
+// Maps Leap vector to the screen in pixels
+Vec2f UiApp::warpVector( const Leap::Vector& v )
+{
+	Vec3f result	= Vec3f::zero();
+	if ( mDevice ) {
+		const Leap::Screen& screen = mDevice->getController()->locatedScreens().closestScreen( v );
+
+		result		= LeapMotion::toVec3f( screen.project( v, true ) );
+	}
+	result			*= Vec3f( getWindowSize(), 0.0f );
+	result.y		= (float)getWindowHeight() - result.y;
+	return result.xy();
+}
+
+// Run application
+CINDER_APP_BASIC( UiApp, RendererGl( RendererGl::AA_NONE ) )
