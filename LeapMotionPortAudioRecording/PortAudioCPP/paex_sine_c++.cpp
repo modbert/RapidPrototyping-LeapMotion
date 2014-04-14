@@ -47,7 +47,7 @@
 #include "include\Leap.h"
 #include "include\LeapMath.h"
 
-#define NUM_SECONDS   (15)
+#define NUM_SECONDS   (20)
 #define SAMPLE_RATE   (44100)
 #define FRAMES_PER_BUFFER  (64)
 
@@ -55,7 +55,7 @@
 #define M_PI  (3.14159265)
 #endif
 
-#define TABLE_SIZE   (10000)
+#define TABLE_SIZE   (50000)
 
 using namespace Leap;
 
@@ -125,8 +125,8 @@ void SampleListener::onFrame(const Controller& controller) {
     /*std::cout << "Hand sphere radius: " << hand.sphereRadius()
               << " mm, palm position: " << hand.palmPosition() << std::endl;*/
 
-	shift = hand.palmPosition().y/10 + 50;
-	std::cout << "Shift: " << shift << std::endl;
+	shift = (hand.palmPosition().y + 200);
+	std::cout << "Shift: " << shift-59 << std::endl;
 
     // Get the hand's normal vector and direction
     const Vector normal = hand.palmNormal();
