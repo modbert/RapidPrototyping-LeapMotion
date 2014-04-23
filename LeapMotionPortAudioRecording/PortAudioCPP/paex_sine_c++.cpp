@@ -47,7 +47,8 @@
 #include "include\Leap.h"
 #include "include\LeapMath.h"
 
-#define NUM_SECONDS   (20)
+#define NUM_SECONDS   (300)
+#define REC_SECONDS (5)
 #define SAMPLE_RATE   (44100)
 #define FRAMES_PER_BUFFER  (64)
 
@@ -60,6 +61,9 @@
 using namespace Leap;
 
 int shift = 1;
+bool playback = false;
+bool record = true;
+int recorded_samples = 0;
 
 class SampleListener : public Listener {
   public:
@@ -218,6 +222,7 @@ void SampleListener::onFocusLost(const Controller& controller) {
 class Sine
 {
 public:
+	int sample_index;
     Sine() : stream(0), left_phase(0), right_phase(0)
     {
         /* initialise sinusoidal wavetable */
@@ -301,8 +306,11 @@ public:
 
 		sample_index = 0;
 		num_samples = NUM_SECONDS*SAMPLE_RATE*2;
-
+		// Initializes record_data buffer
 		record_data = (float*) malloc(num_samples*sizeof(float));
+		shift_data = (int*)malloc(REC_SECONDS*SAMPLE_RATE*sizeof(int));
+		// Initializes loop_data buffer
+		loop_data = (float*) malloc(num_samples*sizeof(float));
 
         PaError err = Pa_StartStream( stream );
 
@@ -322,7 +330,8 @@ public:
 private:
 	FILE* record_file;
 	float * record_data;
-	int sample_index;
+	int * shift_data;
+	float * loop_data;
 	int num_samples;
 
     /* The instance callback, where we have access to every method/variable in object of class Sine */
@@ -334,21 +343,39 @@ private:
         float *out = (float*)outputBuffer;
         unsigned long i;
 		float *record_data_ptr = &record_data[sample_index * 2];
+		int* shift_data_ptr;
 
         (void) timeInfo; /* Prevent unused variable warnings. */
         (void) statusFlags;
         (void) inputBuffer;
-
+		if (record)
+		{
+			shift_data_ptr = &shift_data[sample_index/framesPerBuffer];
+			*shift_data_ptr = shift; 
+			right_phase = 0;
+		}
+		else
+		{
+			shift_data_ptr = &shift_data[(sample_index-recorded_samples)/framesPerBuffer];
+		}
         for( i=0; i<framesPerBuffer; i++ )
         {
             *out++ = sine[left_phase];  /* left */
-			*record_data_ptr++ = sine[left_phase];
-            *out++ = sine[right_phase];  /* right */
-			*record_data_ptr++ = sine[right_phase];
+			//*record_data_ptr++ = sine[left_phase];
+            
+			//*record_data_ptr++ = sine[right_phase];
             left_phase += shift;
             if( left_phase >= TABLE_SIZE ) left_phase -= TABLE_SIZE;
-            right_phase += shift; /* higher pitch so we can distinguish left and right. */
-            if( right_phase >= TABLE_SIZE ) right_phase -= TABLE_SIZE;
+			if (playback)
+			{
+				right_phase += *shift_data_ptr; /* higher pitch so we can distinguish left and right. */
+				if( right_phase >= TABLE_SIZE ) right_phase -= TABLE_SIZE;
+				*out++ = sine[right_phase];  /* right */
+			}
+			else
+			{
+				*out++ = sine[0];
+			}
         }
 
 		sample_index += framesPerBuffer;
@@ -411,6 +438,8 @@ int main(void)
     err = Pa_Initialize();
     if( err != paNoError ) goto error;
 
+	playback = false;
+
     if (sine.open(Pa_GetDefaultOutputDevice()))
     {
         if (sine.start())
@@ -418,7 +447,14 @@ int main(void)
             printf("Play for %d seconds.\n", NUM_SECONDS );
 			// Have the sample listener receive events from the controller
 			controller.addListener(listener);
-            Pa_Sleep( NUM_SECONDS * 1000 );
+			record = true;
+			Pa_Sleep(REC_SECONDS * 1000);
+			recorded_samples = sine.sample_index;
+			record = false;
+			playback = true;
+			Pa_Sleep(4500);
+			playback = false;
+			Pa_Sleep( NUM_SECONDS-(REC_SECONDS*2) * 1000 );
 			printf("Started sine wave\n");
             sine.stop();
         }
