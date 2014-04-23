@@ -280,22 +280,25 @@ public:
 
     bool close()
     {
-        if (stream == 0)
-            return false;
+      if (stream == 0)
+         return false;
 
-        PaError err = Pa_CloseStream( stream );
-        stream = 0;
+      PaError err = Pa_CloseStream( stream );
+      stream = 0;
 
-		record_file = fopen("recorded.raw", "wb");
-        if( record_file == NULL )
-        {
-            printf("Could not open file 'recorded.raw'");
-        }
+      record_file = fopen("recorded.raw", "wb");
+      if( record_file == NULL )
+      {
+         printf("Could not open file 'recorded.raw'");
+      }
 
-		fwrite(record_data,sizeof(float),num_samples,record_file);
+      fwrite(record_data,sizeof(float),num_samples,record_file);
+
+      free(record_data);
 
 
-        return (err == paNoError);
+
+      return (err == paNoError);
     }
 
 

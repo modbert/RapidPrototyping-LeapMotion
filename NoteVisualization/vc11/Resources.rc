@@ -1,0 +1,15 @@
+#include "../include/Resources.h"
+
+1	ICON	"..\\resources\\cinder_app_icon.ico"
+
+	RES_TEX_SETTINGS_OFF
+	RES_TEX_SETTINGS_ON
+	RES_TEX_GRAB
+	RES_TEX_HAND
+	RES_TEX_SLIDER
+	RES_TEX_TOUCH
+	RES_TEX_TRACK
+	RES_TEX_MNV_OFF
+	RES_TEX_MNV_ON
+	RES_TEX_VRV_OFF
+	RES_TEX_VRV_ON

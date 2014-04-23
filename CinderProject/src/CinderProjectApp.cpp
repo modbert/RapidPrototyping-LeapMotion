@@ -38,6 +38,7 @@
 #include "cinder/gl/Texture.h"
 #include "cinder/params/Params.h"
 #include "Cinder-LeapMotion.h"
+#include "shellapi.h"
 
 class UiApp : public ci::app::AppBasic
 {
@@ -115,8 +116,10 @@ void UiApp::draw()
 	// Master offset
 	gl::pushMatrices();
 
+   int num_buttons = 3;
+
 	// Draw buttons
-	for ( size_t i = 0; i < 3; ++i ) {
+	for ( size_t i = 0; i < num_buttons; ++i ) {
 		bool pressed = mButtonState[ i ];
 		if (pressed && !anyPressed)
 		{
@@ -143,9 +146,33 @@ void UiApp::draw()
 		gl::color( ColorAf( 0.0f, 0.0f, 0.0f ) );
 		gl::drawSolidCircle( mFingerTipPosition, 26.0f );
 
+
+      // If an option is being hovered on and has been for at least 3 seconds, color the cursor green
 		if (timer.getSeconds() >= 3.0f && anyPressed == true)
 		{
 			gl::color( ColorAf( 0.0f, 0.8f, 0.0f ) );
+
+         // Launch theremin program
+         if (mButtonState[0])
+         {
+            timer.stop();
+            mButtonState[0] = false;
+            anyPressed = false;
+
+            SHELLEXECUTEINFO ShExecInfo = {0};
+            ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+            ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+            ShExecInfo.hwnd = NULL;
+            ShExecInfo.lpVerb = NULL;
+            ShExecInfo.lpFile = L"c:\\test\\PortAudioCPP.exe";        
+            ShExecInfo.lpParameters = L"";   
+            ShExecInfo.lpDirectory = NULL;
+            ShExecInfo.nShow = SW_SHOW;
+            ShExecInfo.hInstApp = NULL; 
+
+            ShellExecuteEx(&ShExecInfo);
+            WaitForSingleObject(ShExecInfo.hProcess,INFINITE);
+         }
 		}
 		else
 		{
@@ -154,6 +181,8 @@ void UiApp::draw()
 
 		gl::drawSolidCircle( mFingerTipPosition, 20.0f );
 
+
+      // Draw the timer if it has been less than 3 seconds since hovering began
 		if (anyPressed && timer.getSeconds() < 3.0f)
 		{
 			gl::drawStringCentered(std::to_string(3-(int)timer.getSeconds()), Vec2f(mFingerTipPosition.x, mFingerTipPosition.y - 10.0f),cinder::ColorA(0,0,0,1),cinder::Font("Arial", 30.0f));
