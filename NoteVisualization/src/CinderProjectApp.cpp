@@ -110,83 +110,83 @@ void NoteVisualization::setup()
    mDevice->getController()->enableGesture(Leap::Gesture::Type::TYPE_CIRCLE);
 
    TextLayout alayout;
-	alayout.setFont( Font( differentFont, 48 ) );
+	alayout.setFont( Font( differentFont, 72 ) );
 	alayout.setColor( Color( 1, 1, 1 ) );
-	alayout.addCenteredLine( "F" );
+	alayout.addCenteredLine( "B" );
 
 	Surface8u arendered = alayout.render( true, PREMULT );
 	aTexture = gl::Texture( arendered );
 
 	TextLayout blayout;
-	blayout.setFont( Font( differentFont, 48 ) );
+	blayout.setFont( Font( differentFont, 72 ) );
 	blayout.setColor( Color( 1, 1, 1 ) );
-	blayout.addCenteredLine( "G" );
+	blayout.addCenteredLine( "C" );
 
 	Surface8u brendered = blayout.render( true, PREMULT );
 	bTexture = gl::Texture( brendered );
 
 	TextLayout clayout;
-	clayout.setFont( Font( differentFont, 48 ) );
+	clayout.setFont( Font( differentFont, 72 ) );
 	clayout.setColor( Color( 1, 1, 1 ) );
-	clayout.addCenteredLine( "A" );
+	clayout.addCenteredLine( "D" );
 
 	Surface8u crendered = clayout.render( true, PREMULT );
 	cTexture = gl::Texture( crendered );
 
 	TextLayout dlayout;
-	dlayout.setFont( Font( differentFont, 48 ) );
+	dlayout.setFont( Font( differentFont, 72 ) );
 	dlayout.setColor( Color( 1, 1, 1 ) );
-	dlayout.addCenteredLine( "B" );
+	dlayout.addCenteredLine( "E" );
 
 	Surface8u drendered = dlayout.render( true, PREMULT );
 	dTexture = gl::Texture( drendered );
 
 	TextLayout elayout;
-	elayout.setFont( Font( differentFont, 48 ) );
+	elayout.setFont( Font( differentFont, 72 ) );
 	elayout.setColor( Color( 1, 1, 1 ) );
-	elayout.addCenteredLine( "C" );
+	elayout.addCenteredLine( "F" );
 
 	Surface8u erendered = elayout.render( true, PREMULT );
 	eTexture = gl::Texture( erendered );
 
 
 	TextLayout flayout;
-	flayout.setFont( Font( differentFont, 48 ) );
+	flayout.setFont( Font( differentFont, 72 ) );
 	flayout.setColor( Color( 1, 1, 1 ) );
-	flayout.addCenteredLine( "D" );
+	flayout.addCenteredLine( "G" );
 
 	Surface8u frendered = flayout.render( true, PREMULT );
 	fTexture = gl::Texture( frendered );
 
 
 	TextLayout glayout;
-	glayout.setFont( Font( differentFont, 48 ) );
+	glayout.setFont( Font( differentFont, 72 ) );
 	glayout.setColor( Color( 1, 1, 1 ) );
-	glayout.addCenteredLine( "E" );
+	glayout.addCenteredLine( "A" );
 
 	Surface8u grendered = glayout.render( true, PREMULT );
 	gTexture = gl::Texture( grendered );
 
 	TextLayout hlayout;
-	hlayout.setFont( Font( differentFont, 48 ) );
+	hlayout.setFont( Font( differentFont, 72 ) );
 	hlayout.setColor( Color( 1, 1, 1 ) );
-	hlayout.addCenteredLine( "F" );
+	hlayout.addCenteredLine( "B" );
 
 	Surface8u hrendered = hlayout.render( true, PREMULT );
 	hTexture = gl::Texture( hrendered );
 
 	TextLayout ilayout;
-	ilayout.setFont( Font( differentFont, 48 ) );
+	ilayout.setFont( Font( differentFont, 72 ) );
 	ilayout.setColor( Color( 1, 1, 1 ) );
-	ilayout.addCenteredLine( "G" );
+	ilayout.addCenteredLine( "C" );
 
 	Surface8u irendered = ilayout.render( true, PREMULT );
 	iTexture = gl::Texture( irendered );
 
 	TextLayout jlayout;
-	jlayout.setFont( Font( differentFont, 48 ) );
+	jlayout.setFont( Font( differentFont, 72 ) );
 	jlayout.setColor( Color( 1, 1, 1 ) );
-	jlayout.addCenteredLine( "A" );
+	jlayout.addCenteredLine( "D" );
 
 	Surface8u jrendered = jlayout.render( true, PREMULT );
 	jTexture = gl::Texture( jrendered );
@@ -228,7 +228,7 @@ void NoteVisualization::update()
 		//console() << "Special thing happened!" << std::endl;
 		aColor = ColorA(0.16,1,0.05);
 		TextLayout alayout;
-		alayout.setFont( Font( differentFont, 48 ) );
+		alayout.setFont( Font( differentFont, 72 ) );
 		alayout.setColor( Color( 1, 1, 1 ) );
 		alayout.addCenteredLine( "B" );
 		Surface8u arendered = alayout.render( true, PREMULT );
@@ -238,7 +238,7 @@ void NoteVisualization::update()
 	{
 		aColor=ColorA(0.98,0.97,1);
 		TextLayout alayout;
-		alayout.setFont( Font( differentFont, 48 ) );
+		alayout.setFont( Font( differentFont, 72 ) );
 		alayout.setColor( Color( 1, 1, 1 ) );
 		alayout.addCenteredLine( "" );
 		Surface8u arendered = alayout.render( true, PREMULT );
@@ -248,7 +248,7 @@ void NoteVisualization::update()
 	{
 		bColor = ColorA(1,0.32,.05);
 		TextLayout blayout;
-		blayout.setFont( Font( differentFont, 48 ) );
+		blayout.setFont( Font( differentFont, 72 ) );
 		blayout.setColor( Color( 1, 1, 1 ) );
 		blayout.addCenteredLine( "C" );
 		Surface8u brendered = blayout.render( true, PREMULT );
@@ -259,7 +259,7 @@ void NoteVisualization::update()
 	{
 		bColor=ColorA(0.90,0.89,1);
 		TextLayout blayout;
-		blayout.setFont( Font( differentFont, 48 ) );
+		blayout.setFont( Font( differentFont, 72 ) );
 		blayout.setColor( Color( 1, 1, 1 ) );
 		blayout.addCenteredLine( "" );
 		Surface8u brendered = blayout.render( true, PREMULT );
@@ -269,7 +269,7 @@ void NoteVisualization::update()
 	{
 		cColor = ColorA(0.21,0.07,1);
 		TextLayout clayout;
-		clayout.setFont( Font( differentFont, 48 ) );
+		clayout.setFont( Font( differentFont, 72 ) );
 		clayout.setColor( Color( 1, 1, 1 ) );
 		clayout.addCenteredLine( "D" );
 		Surface8u crendered = clayout.render( true, PREMULT );
@@ -280,7 +280,7 @@ void NoteVisualization::update()
 	{
 		cColor=ColorA(0.83,0.8,1);
 		TextLayout clayout;
-		clayout.setFont( Font( differentFont, 48 ) );
+		clayout.setFont( Font( differentFont, 72 ) );
 		clayout.setColor( Color( 1, 1, 1 ) );
 		clayout.addCenteredLine( "" );
 		Surface8u crendered = clayout.render( true, PREMULT );
@@ -290,7 +290,7 @@ void NoteVisualization::update()
 	{
 		dColor = ColorA(0.9,0.1,1);
 		TextLayout dlayout;
-		dlayout.setFont( Font( differentFont, 48 ) );
+		dlayout.setFont( Font( differentFont, 72 ) );
 		dlayout.setColor( Color( 1, 1, 1 ) );
 		dlayout.addCenteredLine( "E" );
 		Surface8u drendered = dlayout.render( true, PREMULT );
@@ -300,7 +300,7 @@ void NoteVisualization::update()
 	{
 		dColor=ColorA(0.78,0.75,1);
 		TextLayout dlayout;
-		dlayout.setFont( Font( differentFont, 48 ) );
+		dlayout.setFont( Font( differentFont, 72 ) );
 		dlayout.setColor( Color( 1, 1, 1 ) );
 		dlayout.addCenteredLine( "" );
 		Surface8u drendered = dlayout.render( true, PREMULT );
@@ -311,7 +311,7 @@ void NoteVisualization::update()
 	{
 		eColor = ColorA(1,0.83,0.05);
 		TextLayout elayout;
-		elayout.setFont( Font( differentFont, 48 ) );
+		elayout.setFont( Font( differentFont, 72 ) );
 		elayout.setColor( Color( 1, 1, 1 ) );
 		elayout.addCenteredLine( "F" );
 		Surface8u erendered = elayout.render( true, PREMULT );
@@ -321,7 +321,7 @@ void NoteVisualization::update()
 	{
 		eColor=ColorA(0.71,0.66,1);
 		TextLayout elayout;
-		elayout.setFont( Font( differentFont, 48 ) );
+		elayout.setFont( Font( differentFont, 72 ) );
 		elayout.setColor( Color( 1, 1, 1 ) );
 		elayout.addCenteredLine( "" );
 		Surface8u erendered = elayout.render( true, PREMULT );
@@ -331,7 +331,7 @@ void NoteVisualization::update()
 	{
 		fColor = ColorA(0.25,1,0.5);
 		TextLayout flayout;
-		flayout.setFont( Font( differentFont, 48 ) );
+		flayout.setFont( Font( differentFont, 72 ) );
 		flayout.setColor( Color( 1, 1, 1 ) );
 		flayout.addCenteredLine( "G" );
 		Surface8u frendered = flayout.render( true, PREMULT );
@@ -341,7 +341,7 @@ void NoteVisualization::update()
 	{
 		fColor=ColorA(0.65,0.61,1);
 		TextLayout flayout;
-		flayout.setFont( Font( differentFont, 48 ) );
+		flayout.setFont( Font( differentFont, 72 ) );
 		flayout.setColor( Color( 1, 1, 1 ) );
 		flayout.addCenteredLine( "" );
 		Surface8u frendered = flayout.render( true, PREMULT );
@@ -351,7 +351,7 @@ void NoteVisualization::update()
 	{
 		gColor = ColorA(1,0.09,0.29);
 		TextLayout glayout;
-		glayout.setFont( Font( differentFont, 48 ) );
+		glayout.setFont( Font( differentFont, 72 ) );
 		glayout.setColor( Color( 1, 1, 1 ) );
 		glayout.addCenteredLine( "A" );
 		Surface8u grendered = glayout.render( true, PREMULT );
@@ -361,7 +361,7 @@ void NoteVisualization::update()
 	{
 		gColor=ColorA(0.57,0.48,1);
 		TextLayout glayout;
-		glayout.setFont( Font( differentFont, 48 ) );
+		glayout.setFont( Font( differentFont, 72 ) );
 		glayout.setColor( Color( 1, 1, 1 ) );
 		glayout.addCenteredLine( "" );
 		Surface8u grendered = glayout.render( true, PREMULT );
@@ -371,7 +371,7 @@ void NoteVisualization::update()
 	{
 		hColor = ColorA(1,0.5,0);
 		TextLayout hlayout;
-		hlayout.setFont( Font( differentFont, 48 ) );
+		hlayout.setFont( Font( differentFont, 72 ) );
 		hlayout.setColor( Color( 1, 1, 1 ) );
 		hlayout.addCenteredLine( "B" );
 		Surface8u hrendered = hlayout.render( true, PREMULT );
@@ -381,7 +381,7 @@ void NoteVisualization::update()
 	{
 		hColor=ColorA(0.45,0.39,1);
 		TextLayout hlayout;
-		hlayout.setFont( Font( differentFont, 48 ) );
+		hlayout.setFont( Font( differentFont, 72 ) );
 		hlayout.setColor( Color( 1, 1, 1 ) );
 		hlayout.addCenteredLine( "" );
 		Surface8u hrendered = hlayout.render( true, PREMULT );
@@ -391,7 +391,7 @@ void NoteVisualization::update()
 	{
 		iColor = ColorA(0.65,0.09,1);
 		TextLayout ilayout;
-		ilayout.setFont( Font( differentFont, 48 ) );
+		ilayout.setFont( Font( differentFont, 72 ) );
 		ilayout.setColor( Color( 1, 1, 1 ) );
 		ilayout.addCenteredLine( "C" );
 		Surface8u irendered = ilayout.render( true, PREMULT );
@@ -401,7 +401,7 @@ void NoteVisualization::update()
 	{
 		iColor=ColorA(0.36,0.31,1);
 		TextLayout ilayout;
-		ilayout.setFont( Font( differentFont, 48 ) );
+		ilayout.setFont( Font( differentFont, 72 ) );
 		ilayout.setColor( Color( 1, 1, 1 ) );
 		ilayout.addCenteredLine( "" );
 		Surface8u irendered = ilayout.render( true, PREMULT );
@@ -411,7 +411,7 @@ void NoteVisualization::update()
 	{
 		jColor = ColorA(0,0,0);
 		TextLayout jlayout;
-		jlayout.setFont( Font( differentFont, 48 ) );
+		jlayout.setFont( Font( differentFont, 72 ) );
 		jlayout.setColor( Color( 1, 1, 1 ) );
 		jlayout.addCenteredLine( "D" );
 		Surface8u jrendered = jlayout.render( true, PREMULT );
@@ -421,7 +421,7 @@ void NoteVisualization::update()
 	{
 		jColor=ColorA(0.26,0.20,1);
 		TextLayout jlayout;
-		jlayout.setFont( Font( differentFont, 48 ) );
+		jlayout.setFont( Font( differentFont, 72 ) );
 		jlayout.setColor( Color( 1, 1, 1 ) );
 		jlayout.addCenteredLine( "" );
 		Surface8u jrendered = jlayout.render( true, PREMULT );
