@@ -34,6 +34,8 @@
 * 
 */
 
+#include "cinder/app/AppNative.h"
+#include "cinder/gl/gl.h"
 #include "cinder/app/AppBasic.h"
 #include "cinder/Camera.h"
 #include "cinder/gl/Fbo.h"
@@ -49,6 +51,7 @@
 #include "cinder/Vector.h"
 #include "cinder/Utilities.h"
 #include "ParticleController.h"
+#include "Resources.h"
 
 #define RESOLUTION 10
 #define NUM_PARTICLES_TO_SPAWN 25
@@ -72,6 +75,7 @@ public:
     
 	Channel32f mChannel;
 	gl::Texture	mTexture;
+	gl::Texture myImage;
 	
 	Vec2i mMouseLoc;
 	Vec2f mMouseVel;
@@ -94,6 +98,8 @@ void TutorialApp::prepareSettings( Settings *settings )
 
 void TutorialApp::setup()
 {
+	myImage = gl::Texture( loadImage( loadResource( RES_SPLASHSCREEN_ID ) ) );
+
 	mPerlin = Perlin();
 	
 	Url url( "http://libcinder.org/media/tutorial/paris.jpg" );
@@ -204,6 +210,9 @@ private:
 
 	// Save screen shot
 	void					screenShot();
+
+	//Theremin texture
+	gl::Texture myImage;
 };
 
 #include "cinder/ImageIo.h"
@@ -220,6 +229,11 @@ using namespace std;
 // Render
 void TracerApp::draw()
 {
+	//Draw Theremin Image
+	// clear out the window with black
+	gl::clear( Color( 1, 0, 0 ), true );
+	gl::draw( myImage, getWindowBounds() );
+
 	// Add to accumulation buffer
 	mFbo[ 0 ].bindFramebuffer();
 	gl::setViewport( mFbo[ 0 ].getBounds() );
@@ -307,6 +321,9 @@ void TracerApp::screenShot()
 // Set up
 void TracerApp::setup()
 {
+	//Setup Texture for drawing Theremin Image
+	myImage = gl::Texture( loadImage( loadResource( RES_SPLASHSCREEN_ID ) ) );
+
 	// Set up camera
 	mCamera		= CameraPersp( getWindowWidth(), getWindowHeight(), 60.0f, 0.01f, 1000.0f );
 	mCamera.lookAt( Vec3f( 0.0f, 93.75f, 250.0f ), Vec3f( 0.0f, 250.0f, 0.0f ) );
