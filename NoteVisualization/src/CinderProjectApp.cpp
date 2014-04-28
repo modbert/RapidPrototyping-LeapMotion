@@ -54,8 +54,8 @@ class NoteVisualization : public AppNative {
 };
 
 void NoteVisualization::prepareSettings( Settings *settings ) {
-    settings->setWindowSize(640,480);
-    settings->setFullScreen();
+    settings->setWindowSize(1920,1080);
+    //settings->setFullScreen();
     settings->setFrameRate(60.f);
 }
 

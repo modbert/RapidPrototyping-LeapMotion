@@ -1,0 +1,9 @@
+#include "../include/Resources.h"
+
+ID ICON "cinder_app_icon.ico"
+
+RES_GLSL_BLUR_X_FRAG
+RES_GLSL_BLUR_Y_FRAG
+RES_GLSL_PASS_THROUGH_VERT
+RES_SPLASHSCREEN_ID 
+
