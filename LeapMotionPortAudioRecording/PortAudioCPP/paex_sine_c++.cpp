@@ -43,12 +43,13 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include <Windows.h>
 #include "include\portaudio.h"
 #include "include\Leap.h"
 #include "include\LeapMath.h"
 
 #define NUM_SECONDS   (300)
-#define REC_SECONDS (5)
+#define REC_SECONDS (10)
 #define SAMPLE_RATE   (44100)
 #define FRAMES_PER_BUFFER  (64)
 
@@ -62,8 +63,20 @@ using namespace Leap;
 
 int shift = 1;
 bool playback = false;
-bool record = true;
+bool record = false;
+int sample_index = 0;
 int recorded_samples = 0;
+int startingSampleIndex = 0;
+unsigned int recordStartMs = 0;
+unsigned int playbackStartMs = 0;
+
+void beginRecording()
+{
+   record = true;
+   playback = false;
+   recordStartMs = GetTickCount();
+   startingSampleIndex = sample_index;
+}
 
 class SampleListener : public Listener {
   public:
@@ -101,12 +114,12 @@ void SampleListener::onExit(const Controller& controller) {
 void SampleListener::onFrame(const Controller& controller) {
   // Get the most recent frame and report some basic information
   const Frame frame = controller.frame();
-  std::cout << "Frame id: " << frame.id()
+  /*std::cout << "Frame id: " << frame.id()
             << ", timestamp: " << frame.timestamp()
             << ", hands: " << frame.hands().count()
             << ", fingers: " << frame.fingers().count()
             << ", tools: " << frame.tools().count()
-            << ", gestures: " << frame.gestures().count() << std::endl;
+            << ", gestures: " << frame.gestures().count() << std::endl;*/
 
   if (!frame.hands().isEmpty()) {
     // Get the first hand
@@ -176,6 +189,12 @@ void SampleListener::onFrame(const Controller& controller) {
       case Gesture::TYPE_SWIPE:
       {
         SwipeGesture swipe = gesture;
+
+        if (!record && !playback)
+        {
+         beginRecording();
+        }
+
         std::cout << "Swipe id: " << gesture.id()
           << ", state: " << gesture.state()
           << ", direction: " << swipe.direction()
@@ -222,7 +241,6 @@ void SampleListener::onFocusLost(const Controller& controller) {
 class Sine
 {
 public:
-	int sample_index;
     Sine() : stream(0), left_phase(0), right_phase(0)
     {
         /* initialise sinusoidal wavetable */
@@ -233,6 +251,14 @@ public:
 
         sprintf( message, "No Message" );
     }
+
+    void endRecording()
+   {
+      recorded_samples = sample_index-startingSampleIndex;
+      record = false;
+      playback = true;
+      playbackStartMs = GetTickCount();
+   }
 
     bool open(PaDeviceIndex index)
     {
@@ -330,6 +356,7 @@ public:
         return (err == paNoError);
     }
 
+
 private:
 	FILE* record_file;
 	float * record_data;
@@ -345,21 +372,29 @@ private:
     {
         float *out = (float*)outputBuffer;
         unsigned long i;
-		float *record_data_ptr = &record_data[sample_index * 2];
+        float *record_data_ptr = &record_data[(sample_index-startingSampleIndex) * 2];
 		int* shift_data_ptr;
 
         (void) timeInfo; /* Prevent unused variable warnings. */
         (void) statusFlags;
         (void) inputBuffer;
+
+        if ((GetTickCount() > recordStartMs + (REC_SECONDS * 1000)) && record)
+        {
+           endRecording();
+        }
+
+
+
 		if (record)
 		{
-			shift_data_ptr = &shift_data[sample_index/framesPerBuffer];
+			shift_data_ptr = &shift_data[(sample_index-startingSampleIndex)/framesPerBuffer];
 			*shift_data_ptr = shift; 
 			right_phase = 0;
 		}
-		else
+		else if (playback)
 		{
-			shift_data_ptr = &shift_data[(sample_index-recorded_samples)/framesPerBuffer];
+         shift_data_ptr = &shift_data[((sample_index-startingSampleIndex)-recorded_samples)/framesPerBuffer];
 		}
         for( i=0; i<framesPerBuffer; i++ )
         {
@@ -369,6 +404,12 @@ private:
 			//*record_data_ptr++ = sine[right_phase];
             left_phase += shift;
             if( left_phase >= TABLE_SIZE ) left_phase -= TABLE_SIZE;
+
+            if ((GetTickCount() > playbackStartMs +(REC_SECONDS)*1000) && playback)
+            {
+               playback = false;
+            }
+
 			if (playback)
 			{
 				right_phase += *shift_data_ptr; /* higher pitch so we can distinguish left and right. */
@@ -447,19 +488,16 @@ int main(void)
     {
         if (sine.start())
         {
-            printf("Play for %d seconds.\n", NUM_SECONDS );
-			// Have the sample listener receive events from the controller
-			controller.addListener(listener);
-			record = true;
-			Pa_Sleep(REC_SECONDS * 1000);
-			recorded_samples = sine.sample_index;
-			record = false;
-			playback = true;
-			Pa_Sleep(4500);
-			playback = false;
-			Pa_Sleep( NUM_SECONDS-(REC_SECONDS*2) * 1000 );
-			printf("Started sine wave\n");
-            sine.stop();
+           
+            //printf("Play for %d seconds.\n", NUM_SECONDS );
+			   // Have the sample listener receive events from the controller
+			   controller.addListener(listener);
+            while (1)
+           {
+			      // go forever
+               
+           }
+         sine.stop();
         }
 
         sine.close();
