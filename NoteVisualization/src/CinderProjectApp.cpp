@@ -521,7 +521,7 @@ void NoteVisualization::update()
    if (record)
       fontColor = Color(1, 0, 0);
 
-		if(shift > 279 && mMouseLoc < 289)
+		if(shift > 279 && shift < 289)
 	{
 		//console() << "Special thing happened!" << std::endl;
 		aColor = ColorA(0.16,1,0.05);
@@ -736,95 +736,95 @@ void NoteVisualization::draw()
 	   gl::enableAlphaBlending( PREMULT );
 
 
-		Rectf bar1 = Rectf( 0, 0, app::getWindowWidth(), app::getWindowHeight()/10 );
-		gl::color(aColor);
+		Rectf bar9 = Rectf( 0, 0, app::getWindowWidth(), app::getWindowHeight()/10 );
+		gl::color(jColor);
         gl::drawSolidRect(bar9);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar9);
 
-		Rectf bar = Rectf( 0, app::getWindowHeight()/10, app::getWindowWidth(), app::getWindowHeight()*0.2 );
-		gl::color(bColor);
+		Rectf bar8 = Rectf( 0, app::getWindowHeight()/10, app::getWindowWidth(), app::getWindowHeight()*0.2 );
+		gl::color(iColor);
         gl::drawSolidRect(bar8);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar8);
 
-		Rectf bar2 = Rectf( 0, app::getWindowHeight()*0.2, app::getWindowWidth(), app::getWindowHeight()*0.3 );
-		gl::color(cColor);
+		Rectf bar7 = Rectf( 0, app::getWindowHeight()*0.2, app::getWindowWidth(), app::getWindowHeight()*0.3 );
+		gl::color(hColor);
         gl::drawSolidRect(bar7);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar7);
 
-		Rectf bar3 = Rectf( 0, app::getWindowHeight()*0.3, app::getWindowWidth(), app::getWindowHeight()*0.4 );
-		gl::color(dColor);
+		Rectf bar6 = Rectf( 0, app::getWindowHeight()*0.3, app::getWindowWidth(), app::getWindowHeight()*0.4 );
+		gl::color(gColor);
         gl::drawSolidRect(bar6);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar6);
 
-		Rectf bar4 = Rectf( 0, app::getWindowHeight()*0.4, app::getWindowWidth(), app::getWindowHeight()*0.5 );
-		gl::color(eColor);
+		Rectf bar5 = Rectf( 0, app::getWindowHeight()*0.4, app::getWindowWidth(), app::getWindowHeight()*0.5 );
+		gl::color(fColor);
         gl::drawSolidRect(bar5);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar5);
 
-		Rectf bar5 = Rectf( 0, app::getWindowHeight()*0.5, app::getWindowWidth(), app::getWindowHeight()*0.6 );
-		gl::color(fColor);
+		Rectf bar4 = Rectf( 0, app::getWindowHeight()*0.5, app::getWindowWidth(), app::getWindowHeight()*0.6 );
+		gl::color(eColor);
         gl::drawSolidRect(bar4);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar4);
 
-		Rectf bar6 = Rectf( 0, app::getWindowHeight()*0.6, app::getWindowWidth(), app::getWindowHeight()*0.7 );
-		gl::color(gColor);
+		Rectf bar3 = Rectf( 0, app::getWindowHeight()*0.6, app::getWindowWidth(), app::getWindowHeight()*0.7 );
+		gl::color(dColor);
         gl::drawSolidRect(bar3);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar3);
 
-		Rectf bar7 = Rectf( 0, app::getWindowHeight()*0.7, app::getWindowWidth(), app::getWindowHeight()*0.8 );
-		gl::color(hColor);
+		Rectf bar2 = Rectf( 0, app::getWindowHeight()*0.7, app::getWindowWidth(), app::getWindowHeight()*0.8 );
+		gl::color(cColor);
         gl::drawSolidRect(bar2);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar2);
 
-		Rectf bar8 = Rectf( 0, app::getWindowHeight()*0.8, app::getWindowWidth(), app::getWindowHeight()*0.9 );
-		gl::color(iColor);
+		Rectf bar = Rectf( 0, app::getWindowHeight()*0.8, app::getWindowWidth(), app::getWindowHeight()*0.9 );
+		gl::color(bColor);
         gl::drawSolidRect(bar);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar);
 
-		Rectf bar9 = Rectf( 0, app::getWindowHeight()*0.9, app::getWindowWidth(), app::getWindowHeight() );
-		gl::color(jColor);
+		Rectf bar1 = Rectf( 0, app::getWindowHeight()*0.9, app::getWindowWidth(), app::getWindowHeight() );
+		gl::color(aColor);
         gl::drawSolidRect(bar1);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar1);
 
 	gl::color( Color::white() );
-	gl::draw( aTexture, Vec2f( 0,app::getWindowHeight()*0.1 - 72) );
+	gl::draw( aTexture, Vec2f( 0,app::getWindowHeight() - 72) );
 
 	gl::color( Color::white() );
-	gl::draw( bTexture, Vec2f( 0, app::getWindowHeight()*0.2 - 72) );
+	gl::draw( bTexture, Vec2f( 0, app::getWindowHeight()*0.9 - 72) );
 
 	gl::color( Color::white() );
-	gl::draw( cTexture, Vec2f( 0, app::getWindowHeight()*0.3 - 72) );
+	gl::draw( cTexture, Vec2f( 0, app::getWindowHeight()*0.8 - 72) );
 
 	gl::color( Color::white() );
-	gl::draw( dTexture, Vec2f( 0, app::getWindowHeight()*0.4 - 72) );
+	gl::draw( dTexture, Vec2f( 0, app::getWindowHeight()*0.7 - 72) );
 
 	gl::color( Color::white() );
-	gl::draw( eTexture, Vec2f( 0, app::getWindowHeight()*0.5 - 72) );
+	gl::draw( eTexture, Vec2f( 0, app::getWindowHeight()*0.6 - 72) );
 
 	gl::color( Color::white() );
-	gl::draw( fTexture, Vec2f( 0, app::getWindowHeight()*0.6 - 72) );
+	gl::draw( fTexture, Vec2f( 0, app::getWindowHeight()*0.5 - 72) );
 
 	gl::color( Color::white() );
-	gl::draw( gTexture, Vec2f( 0, app::getWindowHeight()*0.7 - 72) );
+	gl::draw( gTexture, Vec2f( 0, app::getWindowHeight()*0.4 - 72) );
 
 	gl::color( Color::white() );
-	gl::draw( hTexture, Vec2f( 0, app::getWindowHeight()*0.8 - 72) );
+	gl::draw( hTexture, Vec2f( 0, app::getWindowHeight()*0.3 - 72) );
 
 	gl::color( Color::white() );
-	gl::draw( iTexture, Vec2f( 0, app::getWindowHeight()* 0.9  - 72) );
+	gl::draw( iTexture, Vec2f( 0, app::getWindowHeight()* 0.2  - 72) );
 
 	gl::color( Color::white() );
-	gl::draw( jTexture, Vec2f( 0, app::getWindowHeight() - 72 ) );
+	gl::draw( jTexture, Vec2f( 0, app::getWindowHeight()* 0.1 - 72 ) );
 
       gl::pushMatrices();
 

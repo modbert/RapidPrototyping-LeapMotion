@@ -36,7 +36,6 @@
 
 #include "cinder/app/AppNative.h"
 #include "cinder/gl/gl.h"
-#include "cinder/app/AppBasic.h"
 #include "cinder/Camera.h"
 #include "cinder/gl/Fbo.h"
 #include "cinder/gl/GlslProg.h"
@@ -53,142 +52,248 @@
 #include "ParticleController.h"
 #include "Resources.h"
 
+#include "portaudio.h"
+
 #define RESOLUTION 10
 #define NUM_PARTICLES_TO_SPAWN 25
 
 using namespace ci;
 using namespace ci::app;
 
-#if 0
-class TutorialApp : public AppBasic {
-public:
-	void prepareSettings( Settings *settings );
-	void keyDown( KeyEvent event );
-	void mouseDown( MouseEvent event );
-	void mouseUp( MouseEvent event );
-	void mouseMove( MouseEvent event );
-	void mouseDrag( MouseEvent event );
-	void setup();
-	void update();
-	void draw();
-	
-	Perlin mPerlin;
-    
-	Channel32f mChannel;
-	gl::Texture	mTexture;
-	gl::Texture myImage;
-	
-	Vec2i mMouseLoc;
-	Vec2f mMouseVel;
-	bool mIsPressed;
-	
-	ParticleController mParticleController;
-	
-	bool mDrawParticles;
-	bool mDrawImage;
-	bool mSaveFrames;
-};
+#define REC_SECONDS (10)
+#define SAMPLE_RATE   (44100)
+#define FRAMES_PER_BUFFER  (64)
 
-
-
-void TutorialApp::prepareSettings( Settings *settings )
-{
-	settings->setWindowSize( 800, 600 );
-	settings->setFrameRate( 60.0f );
-}
-
-void TutorialApp::setup()
-{
-	myImage = gl::Texture( loadImage( loadResource( RES_SPLASHSCREEN_ID ) ) );
-
-	mPerlin = Perlin();
-	
-	Url url( "http://libcinder.org/media/tutorial/paris.jpg" );
-	mChannel = Channel32f( loadImage( loadUrl( url ) ) );
-	mTexture = mChannel;
-    
-	mMouseLoc = Vec2i( 0, 0 );
-	mMouseVel = Vec2f::zero();
-	mDrawParticles = true;
-	mDrawImage = false;
-	mIsPressed = false;
-	mSaveFrames = false;
-}
-
-
-void TutorialApp::mouseDown( MouseEvent event )
-{
-	mIsPressed = true;
-}
-
-void TutorialApp::mouseUp( MouseEvent event )
-{
-	mIsPressed = false;
-}
-
-void TutorialApp::mouseMove( MouseEvent event )
-{
-	mMouseVel = ( event.getPos() - mMouseLoc );
-	mMouseLoc = event.getPos();
-}
-
-void TutorialApp::mouseDrag( MouseEvent event )
-{
-	mouseMove( event );
-}
-
-void TutorialApp::keyDown( KeyEvent event )
-{
-	if( event.getChar() == '1' ){
-		mDrawImage = ! mDrawImage;
-	} else if( event.getChar() == '2' ){
-		mDrawParticles = ! mDrawParticles;
-	}
-	
-	if( event.getChar() == 's' ){
-		mSaveFrames = ! mSaveFrames;
-	}
-}
-
-void TutorialApp::update()
-{
-	if( ! mChannel ) return;
-	
-	if( mIsPressed )
-		mParticleController.addParticles( NUM_PARTICLES_TO_SPAWN, mMouseLoc, mMouseVel );
-	
-	mParticleController.update( mPerlin, mChannel, mMouseLoc );
-}
-
-void TutorialApp::draw()
-{
-	gl::clear( Color( 0, 0, 0 ), true );
-	
-	if( mDrawImage ){
-		mTexture.enableAndBind();
-		gl::draw( mTexture, getWindowBounds() );
-	}
-	
-	if( mDrawParticles ){
-		glDisable( GL_TEXTURE_2D );
-		mParticleController.draw();
-	}
-	
-	if( mSaveFrames ){
-		writeImage( getHomeDirectory() / ("image_" + toString( getElapsedFrames() ) + ".png"), copyWindowSurface() );
-	}
-}
+#ifndef M_PI
+#define M_PI  (3.14159265)
 #endif
 
+#define TABLE_SIZE   (50000)
+
+int shift = 1;
+bool playback = false;
+bool record = false;
+int sample_index = 0;
+int recorded_samples = 0;
+int startingSampleIndex = 0;
+unsigned int recordStartMs = 0;
+unsigned int playbackStartMs = 0;
+
+class Sine
+{
+public:
+   int left_phase;
+   int right_phase;
+    Sine() : stream(0), left_phase(0), right_phase(0)
+    {
+       left_phase = right_phase = 0;
+        /* initialise sinusoidal wavetable */
+        for( int i=0; i<TABLE_SIZE; i++ )
+        {
+            sine[i] = (float) sin( ((double)i/(double)TABLE_SIZE) * M_PI * 2. );
+        }
+
+        sprintf( message, "No Message" );
+    }
+
+    void endRecording()
+   {
+      recorded_samples = sample_index-startingSampleIndex;
+      record = false;
+      playback = true;
+      playbackStartMs = GetTickCount();
+   }
+
+    bool open(PaDeviceIndex index)
+    {
+        PaStreamParameters outputParameters;
+
+        outputParameters.device = index;
+        if (outputParameters.device == paNoDevice) {
+            return false;
+        }
+
+        outputParameters.channelCount = 2;       /* stereo output */
+        outputParameters.sampleFormat = paFloat32; /* 32 bit floating point output */
+        outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
+        outputParameters.hostApiSpecificStreamInfo = NULL;
+
+        PaError err = Pa_OpenStream(
+            &stream,
+            NULL, /* no input */
+            &outputParameters,
+            SAMPLE_RATE,
+            FRAMES_PER_BUFFER,
+            paClipOff,      /* we won't output out of range samples so don't bother clipping them */
+            &Sine::paCallback,
+            this            /* Using 'this' for userData so we can cast to Sine* in paCallback method */
+            );
+
+        if (err != paNoError)
+        {
+            /* Failed to open stream to device !!! */
+            return false;
+        }
+
+        err = Pa_SetStreamFinishedCallback( stream, &Sine::paStreamFinished );
+
+        if (err != paNoError)
+        {
+            Pa_CloseStream( stream );
+            stream = 0;
+
+            return false;
+        }
+
+        return true;
+    }
+
+    bool close()
+    {
+      if (stream == 0)
+         return false;
+
+      PaError err = Pa_CloseStream( stream );
+      stream = 0;
+
+      return (err == paNoError);
+    }
 
 
-// original code
+    bool start()
+    {
+        if (stream == 0)
+            return false;
 
-class TracerApp : public ci::app::AppBasic
+		sample_index = 0;
+
+		shift_data = (int*)malloc(REC_SECONDS*SAMPLE_RATE*sizeof(int));
+
+        PaError err = Pa_StartStream( stream );
+
+        return (err == paNoError);
+    }
+
+    bool stop()
+    {
+        if (stream == 0)
+            return false;
+
+        PaError err = Pa_StopStream( stream );
+
+        return (err == paNoError);
+    }
+
+
+private:
+	FILE* record_file;
+	int * shift_data;
+
+    /* The instance callback, where we have access to every method/variable in object of class Sine */
+    int paCallbackMethod(const void *inputBuffer, void *outputBuffer,
+        unsigned long framesPerBuffer,
+        const PaStreamCallbackTimeInfo* timeInfo,
+        PaStreamCallbackFlags statusFlags)
+    {
+        float *out = (float*)outputBuffer;
+        unsigned long i;
+		  int* shift_data_ptr;
+
+        (void) timeInfo; /* Prevent unused variable warnings. */
+        (void) statusFlags;
+        (void) inputBuffer;
+
+        if ((GetTickCount() > recordStartMs + (REC_SECONDS * 1000)) && record)
+        {
+           endRecording();
+        }
+
+
+
+		if (record)
+		{
+			shift_data_ptr = &shift_data[(sample_index-startingSampleIndex)/framesPerBuffer];
+			*shift_data_ptr = shift; 
+		}
+		else if (playback)
+		{
+         shift_data_ptr = &shift_data[((sample_index-startingSampleIndex)-recorded_samples)/framesPerBuffer];
+		}
+        for( i=0; i<framesPerBuffer; i++ )
+        {
+            *out++ = sine[left_phase];  /* left */
+			//*record_data_ptr++ = sine[left_phase];
+            
+			//*record_data_ptr++ = sine[right_phase];
+            left_phase += shift;
+            if( left_phase >= TABLE_SIZE ) left_phase -= TABLE_SIZE;
+
+            if ((GetTickCount() > playbackStartMs +(REC_SECONDS-2)*1000) && playback)
+            {
+               playback = false;
+            }
+
+			if (playback)
+			{
+				right_phase += *shift_data_ptr; /* higher pitch so we can distinguish left and right. */
+				if( right_phase >= TABLE_SIZE ) right_phase -= TABLE_SIZE;
+				*out++ = sine[right_phase];  /* right */
+			}
+			else
+			{
+            right_phase += shift;
+            if (right_phase >= TABLE_SIZE) right_phase -= TABLE_SIZE;
+				*out++ = sine[right_phase];
+			}
+        }
+
+		sample_index += framesPerBuffer;
+        return paContinue;
+
+    }
+
+    /* This routine will be called by the PortAudio engine when audio is needed.
+    ** It may called at interrupt level on some machines so don't do anything
+    ** that could mess up the system like calling malloc() or free().
+    */
+    static int paCallback( const void *inputBuffer, void *outputBuffer,
+        unsigned long framesPerBuffer,
+        const PaStreamCallbackTimeInfo* timeInfo,
+        PaStreamCallbackFlags statusFlags,
+        void *userData )
+    {
+        /* Here we cast userData to Sine* type so we can call the instance method paCallbackMethod, we can do that since 
+           we called Pa_OpenStream with 'this' for userData */
+        return ((Sine*)userData)->paCallbackMethod(inputBuffer, outputBuffer,
+            framesPerBuffer,
+            timeInfo,
+            statusFlags);
+    }
+
+
+    void paStreamFinishedMethod()
+    {
+        printf( "Stream Completed: %s\n", message );
+    }
+
+    /*
+     * This routine is called by portaudio when playback is done.
+     */
+    static void paStreamFinished(void* userData)
+    {
+        return ((Sine*)userData)->paStreamFinishedMethod();
+    }
+
+    PaStream *stream;
+    float sine[TABLE_SIZE];
+    char message[20];
+};
+
+class TracerApp : public ci::app::AppNative
 {
 public:
 	void					draw();
-	void					prepareSettings( ci::app::AppBasic::Settings* settings );
+	void					prepareSettings( ci::app::AppNative::Settings* settings );
 	void					setup();
 	void					update();
 private:
@@ -293,13 +398,34 @@ void TracerApp::draw()
 	gl::disable( GL_TEXTURE_2D );
 
 	// Draw the interface
-	mParams.draw();
+	//mParams.draw();
 }
 
 // Called when Leap frame data is ready
 void TracerApp::onFrame( Leap::Frame frame )
 {
 	mFrame = frame;
+
+   // Get gestures
+   const Leap::GestureList gestures = frame.gestures();
+   for (int g = 0; g < gestures.count(); ++g) 
+   {
+      Leap::Gesture gesture = gestures[g];
+
+      switch (gesture.type()) 
+      {
+         case Leap::Gesture::TYPE_SWIPE:
+         {
+           if (!record && !playback)
+           {
+              //beginRecording();
+           }
+         }
+         break;
+         default:
+            break;
+       }
+   }
 }
 
 // Prepare window
@@ -308,7 +434,7 @@ void TracerApp::prepareSettings( Settings* settings )
 	settings->setFrameRate( 60.0f );
 	settings->setResizable( false );
 	settings->setWindowSize( 1024, 768 );
-   settings->setFullScreen();
+   //settings->setFullScreen();
 }
 
 // Take screen shot
@@ -335,6 +461,8 @@ void TracerApp::setup()
 	// Start device
 	mDevice = Device::create();
 	mDevice->connectEventHandler( &TracerApp::onFrame, this );
+
+   mDevice->getController()->enableGesture(Leap::Gesture::Type::TYPE_SWIPE);
 
 	// Load shaders
 	try {
@@ -380,6 +508,30 @@ void TracerApp::setup()
 	}
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+
+   // Audio stuff
+   Sine sine;
+   PaError err;
+
+   sine.left_phase = sine.right_phase = 0;
+
+   err = Pa_Initialize();
+   //if( err != paNoError ) goto error;
+
+	playback = false;
+
+    if (sine.open(Pa_GetDefaultOutputDevice()))
+    {
+        console() << "sine started" << std::endl;
+        sine.start();
+    }
+    /*
+
+error:
+    Pa_Terminate();
+    fprintf( stderr, "An error occured while using the portaudio stream\n" );
+    fprintf( stderr, "Error number: %d\n", err );
+    fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );*/
 }
 
 // Runs update logic
@@ -392,6 +544,8 @@ void TracerApp::update()
 	const Leap::HandList& hands = mFrame.hands();
 	for ( Leap::HandList::const_iterator handIter = hands.begin(); handIter != hands.end(); ++handIter ) {
 		const Leap::Hand& hand = *handIter;
+
+      shift = (hand.palmPosition().y)+35;
 		
 		const Leap::PointableList& pointables = hand.pointables();
 		for ( Leap::PointableList::const_iterator pointIter = pointables.begin(); pointIter != pointables.end(); ++pointIter ) {
@@ -420,5 +574,5 @@ void TracerApp::update()
 }
 
 // Run application
-CINDER_APP_BASIC( TracerApp, RendererGl )
+CINDER_APP_NATIVE( TracerApp, RendererGl )
 

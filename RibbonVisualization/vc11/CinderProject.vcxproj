@@ -113,6 +113,13 @@
     <ResourceCompile Include="Resources.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\pa_asio.h" />
+    <ClInclude Include="..\include\pa_win_ds.h" />
+    <ClInclude Include="..\include\pa_win_wasapi.h" />
+    <ClInclude Include="..\include\pa_win_waveformat.h" />
+    <ClInclude Include="..\include\pa_win_wdmks.h" />
+    <ClInclude Include="..\include\pa_win_wmme.h" />
+    <ClInclude Include="..\include\portaudio.h" />
     <ClInclude Include="..\include\Resources.h" />
     <ClInclude Include="..\..\Desktop\cinder_0.8.5_vc2012\blocks\leap\src\Cinder-LeapMotion.h" />
     <ClInclude Include="..\..\Desktop\cinder_0.8.5_vc2012\blocks\leap\src\Leap.h" />
@@ -128,10 +135,14 @@
     <None Include="..\resources\blur_x_frag.glsl" />
     <None Include="..\resources\blur_y_frag.glsl" />
     <None Include="..\resources\pass_through_vert.glsl" />
+    <None Include="..\resources\portaudio_x86.dll" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resources\SplashScreen.png" />
     <Image Include="cinder_app_icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\resources\portaudio_x86.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
