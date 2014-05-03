@@ -396,6 +396,7 @@ private:
 		{
          shift_data_ptr = &shift_data[((sample_index-startingSampleIndex)-recorded_samples)/framesPerBuffer];
 		}
+      printf("shift= %d\n", shift);
         for( i=0; i<framesPerBuffer; i++ )
         {
             *out++ = sine[left_phase];  /* left */

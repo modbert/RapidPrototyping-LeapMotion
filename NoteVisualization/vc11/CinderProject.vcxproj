@@ -50,7 +50,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;"..\..\Desktop\cinder_0.8.5_vc2012\include";"..\..\Desktop\cinder_0.8.5_vc2012\boost";..\..\Desktop\cinder_0.8.5_vc2012\blocks\leap\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Acer\Google Drive\school\Spring 2014\Rapid Prototyping\leap\RapidPrototyping-LeapMotion\NoteVisualization\include;C:\Users\Acer\Google Drive\school\Spring 2014\Rapid Prototyping\leap\RapidPrototyping-LeapMotion\cinder_0.8.5_vc2012\include;C:\Users\Acer\Google Drive\school\Spring 2014\Rapid Prototyping\leap\RapidPrototyping-LeapMotion\cinder_0.8.5_vc2012\boost;C:\Users\Acer\Google Drive\school\Spring 2014\Rapid Prototyping\leap\RapidPrototyping-LeapMotion\cinder_0.8.5_vc2012\blocks\leap\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;_WIN32_WINNT=0x0502;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -61,11 +61,11 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>"..\..\Desktop\cinder_0.8.5_vc2012\include";..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Acer\Google Drive\school\Spring 2014\Rapid Prototyping\leap\RapidPrototyping-LeapMotion\cinder_0.8.5_vc2012\include;..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder_d.lib;%(AdditionalDependencies);..\..\Desktop\cinder_0.8.5_vc2012\blocks\leap\lib\msw\Leapd.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"..\..\Desktop\cinder_0.8.5_vc2012\lib";"..\..\Desktop\cinder_0.8.5_vc2012\lib\msw"</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder_d.lib;%(AdditionalDependencies);C:\Users\Acer\Google Drive\school\Spring 2014\Rapid Prototyping\leap\RapidPrototyping-LeapMotion\cinder_0.8.5_vc2012\blocks\leap\lib\msw\Leap.lib;C:\Users\Acer\Google Drive\school\Spring 2014\Rapid Prototyping\leap\RapidPrototyping-LeapMotion\cinder_0.8.5_vc2012\blocks\leap\lib\msw\Leapd.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\Acer\Google Drive\school\Spring 2014\Rapid Prototyping\leap\RapidPrototyping-LeapMotion\cinder_0.8.5_vc2012\lib;C:\Users\Acer\Google Drive\school\Spring 2014\Rapid Prototyping\leap\RapidPrototyping-LeapMotion\cinder_0.8.5_vc2012\lib\msw</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -74,7 +74,7 @@
       <IgnoreSpecificDefaultLibraries>LIBCMT;LIBCPMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "..\..\Desktop\cinder_0.8.5_vc2012\blocks\leap\lib\msw\Leapd.dll" "$(OutDir)"</Command>
+      <Command>xcopy /y "C:\Users\Acer\Google Drive\school\Spring 2014\Rapid Prototyping\leap\RapidPrototyping-LeapMotion\cinder_0.8.5_vc2012\blocks\leap\lib\msw\Leapd.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -113,6 +113,13 @@
     <ResourceCompile Include="Resources.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\pa_asio.h" />
+    <ClInclude Include="..\include\pa_win_ds.h" />
+    <ClInclude Include="..\include\pa_win_wasapi.h" />
+    <ClInclude Include="..\include\pa_win_waveformat.h" />
+    <ClInclude Include="..\include\pa_win_wdmks.h" />
+    <ClInclude Include="..\include\pa_win_wmme.h" />
+    <ClInclude Include="..\include\portaudio.h" />
     <ClInclude Include="..\include\Resources.h" />
     <ClInclude Include="..\..\Desktop\cinder_0.8.5_vc2012\blocks\leap\src\Cinder-LeapMotion.h" />
     <ClInclude Include="..\..\Desktop\cinder_0.8.5_vc2012\blocks\leap\src\Leap.h" />
@@ -121,6 +128,12 @@
   <ItemGroup>
     <ClCompile Include="..\..\cinder_0.8.5_vc2012\blocks\leap\src\Cinder-LeapMotion.cpp" />
     <ClCompile Include="..\src\CinderProjectApp.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\resources\portaudio_x86.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\resources\portaudio_x86.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
