@@ -521,7 +521,7 @@ void NoteVisualization::update()
    if (record)
       fontColor = Color(1, 0, 0);
 
-		if(mMouseLoc > 213 && mMouseLoc < 229)
+		if(shift > 279 && mMouseLoc < 289)
 	{
 		//console() << "Special thing happened!" << std::endl;
 		aColor = ColorA(0.16,1,0.05);
@@ -542,7 +542,7 @@ void NoteVisualization::update()
 		Surface8u arendered = alayout.render( true, PREMULT );
 		aTexture = gl::Texture( arendered );
 	}
-		if(mMouseLoc > 230 && mMouseLoc < 246)
+		if(shift > 290 && shift < 299)
 	{
 		bColor = ColorA(1,0.32,.05);
 		TextLayout blayout;
@@ -563,7 +563,7 @@ void NoteVisualization::update()
 		Surface8u brendered = blayout.render( true, PREMULT );
 		bTexture = gl::Texture( brendered );
 	}
-	if(mMouseLoc > 268 && mMouseLoc < 282)
+	if(shift > 329 && shift < 341)
 	{
 		cColor = ColorA(0.21,0.07,1);
 		TextLayout clayout;
@@ -584,7 +584,7 @@ void NoteVisualization::update()
 		Surface8u crendered = clayout.render( true, PREMULT );
 		cTexture = gl::Texture( crendered );
 	}
-	if(mMouseLoc > 307 && mMouseLoc < 323)
+	if(shift > 364 && shift < 376)
 	{
 		dColor = ColorA(0.9,0.1,1);
 		TextLayout dlayout;
@@ -605,7 +605,7 @@ void NoteVisualization::update()
 		dTexture = gl::Texture( drendered );
 
 	}
-	if(mMouseLoc > 329 && mMouseLoc < 345)
+	if(shift > 386 && shift < 398)
 	{
 		eColor = ColorA(1,0.83,0.05);
 		TextLayout elayout;
@@ -625,7 +625,7 @@ void NoteVisualization::update()
 		Surface8u erendered = elayout.render( true, PREMULT );
 		eTexture = gl::Texture( erendered );
 	}
-	if(mMouseLoc > 377 && mMouseLoc < 393)
+	if(shift > 436 && shift < 448)
 	{
 		fColor = ColorA(0.25,1,0.5);
 		TextLayout flayout;
@@ -645,7 +645,7 @@ void NoteVisualization::update()
 		Surface8u frendered = flayout.render( true, PREMULT );
 		fTexture = gl::Texture( frendered );
 	}
-	if(mMouseLoc > 432 && mMouseLoc < 448)
+	if(shift > 489 && shift < 501)
 	{
 		gColor = ColorA(1,0.09,0.29);
 		TextLayout glayout;
@@ -665,7 +665,7 @@ void NoteVisualization::update()
 		Surface8u grendered = glayout.render( true, PREMULT );
 		gTexture = gl::Texture( grendered );
 	}
-	if(mMouseLoc > 492 && mMouseLoc < 508)
+	if(shift > 556 && shift < 568)
 	{
 		hColor = ColorA(1,0.5,0);
 		TextLayout hlayout;
@@ -685,7 +685,7 @@ void NoteVisualization::update()
 		Surface8u hrendered = hlayout.render( true, PREMULT );
 		hTexture = gl::Texture( hrendered );
 	}
-	if(mMouseLoc > 526 && mMouseLoc < 542)
+	if(shift > 594 && shift < 606)
 	{
 		iColor = ColorA(0.65,0.09,1);
 		TextLayout ilayout;
@@ -705,7 +705,7 @@ void NoteVisualization::update()
 		Surface8u irendered = ilayout.render( true, PREMULT );
 		iTexture = gl::Texture( irendered );
 	}
-	if(mMouseLoc > 601 && mMouseLoc < 617)
+	if(shift > 679 && shift < 691)
 	{
 		jColor = ColorA(0,0,0);
 		TextLayout jlayout;
@@ -738,63 +738,63 @@ void NoteVisualization::draw()
 
 		Rectf bar1 = Rectf( 0, 0, app::getWindowWidth(), app::getWindowHeight()/10 );
 		gl::color(aColor);
-        gl::drawSolidRect(bar1);
+        gl::drawSolidRect(bar9);
         gl::color(0,0,0);
-        gl::drawStrokedRect(bar1);
+        gl::drawStrokedRect(bar9);
 
 		Rectf bar = Rectf( 0, app::getWindowHeight()/10, app::getWindowWidth(), app::getWindowHeight()*0.2 );
 		gl::color(bColor);
-        gl::drawSolidRect(bar);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar);
-
-		Rectf bar2 = Rectf( 0, app::getWindowHeight()*0.2, app::getWindowWidth(), app::getWindowHeight()*0.3 );
-		gl::color(cColor);
-        gl::drawSolidRect(bar2);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar2);
-
-		Rectf bar3 = Rectf( 0, app::getWindowHeight()*0.3, app::getWindowWidth(), app::getWindowHeight()*0.4 );
-		gl::color(dColor);
-        gl::drawSolidRect(bar3);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar3);
-
-		Rectf bar4 = Rectf( 0, app::getWindowHeight()*0.4, app::getWindowWidth(), app::getWindowHeight()*0.5 );
-		gl::color(eColor);
-        gl::drawSolidRect(bar4);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar4);
-
-		Rectf bar5 = Rectf( 0, app::getWindowHeight()*0.5, app::getWindowWidth(), app::getWindowHeight()*0.6 );
-		gl::color(fColor);
-        gl::drawSolidRect(bar5);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar5);
-
-		Rectf bar6 = Rectf( 0, app::getWindowHeight()*0.6, app::getWindowWidth(), app::getWindowHeight()*0.7 );
-		gl::color(gColor);
-        gl::drawSolidRect(bar6);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar6);
-
-		Rectf bar7 = Rectf( 0, app::getWindowHeight()*0.7, app::getWindowWidth(), app::getWindowHeight()*0.8 );
-		gl::color(hColor);
-        gl::drawSolidRect(bar7);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar7);
-
-		Rectf bar8 = Rectf( 0, app::getWindowHeight()*0.8, app::getWindowWidth(), app::getWindowHeight()*0.9 );
-		gl::color(iColor);
         gl::drawSolidRect(bar8);
         gl::color(0,0,0);
         gl::drawStrokedRect(bar8);
 
+		Rectf bar2 = Rectf( 0, app::getWindowHeight()*0.2, app::getWindowWidth(), app::getWindowHeight()*0.3 );
+		gl::color(cColor);
+        gl::drawSolidRect(bar7);
+        gl::color(0,0,0);
+        gl::drawStrokedRect(bar7);
+
+		Rectf bar3 = Rectf( 0, app::getWindowHeight()*0.3, app::getWindowWidth(), app::getWindowHeight()*0.4 );
+		gl::color(dColor);
+        gl::drawSolidRect(bar6);
+        gl::color(0,0,0);
+        gl::drawStrokedRect(bar6);
+
+		Rectf bar4 = Rectf( 0, app::getWindowHeight()*0.4, app::getWindowWidth(), app::getWindowHeight()*0.5 );
+		gl::color(eColor);
+        gl::drawSolidRect(bar5);
+        gl::color(0,0,0);
+        gl::drawStrokedRect(bar5);
+
+		Rectf bar5 = Rectf( 0, app::getWindowHeight()*0.5, app::getWindowWidth(), app::getWindowHeight()*0.6 );
+		gl::color(fColor);
+        gl::drawSolidRect(bar4);
+        gl::color(0,0,0);
+        gl::drawStrokedRect(bar4);
+
+		Rectf bar6 = Rectf( 0, app::getWindowHeight()*0.6, app::getWindowWidth(), app::getWindowHeight()*0.7 );
+		gl::color(gColor);
+        gl::drawSolidRect(bar3);
+        gl::color(0,0,0);
+        gl::drawStrokedRect(bar3);
+
+		Rectf bar7 = Rectf( 0, app::getWindowHeight()*0.7, app::getWindowWidth(), app::getWindowHeight()*0.8 );
+		gl::color(hColor);
+        gl::drawSolidRect(bar2);
+        gl::color(0,0,0);
+        gl::drawStrokedRect(bar2);
+
+		Rectf bar8 = Rectf( 0, app::getWindowHeight()*0.8, app::getWindowWidth(), app::getWindowHeight()*0.9 );
+		gl::color(iColor);
+        gl::drawSolidRect(bar);
+        gl::color(0,0,0);
+        gl::drawStrokedRect(bar);
+
 		Rectf bar9 = Rectf( 0, app::getWindowHeight()*0.9, app::getWindowWidth(), app::getWindowHeight() );
 		gl::color(jColor);
-        gl::drawSolidRect(bar9);
+        gl::drawSolidRect(bar1);
         gl::color(0,0,0);
-        gl::drawStrokedRect(bar9);
+        gl::drawStrokedRect(bar1);
 
 	gl::color( Color::white() );
 	gl::draw( aTexture, Vec2f( 0,app::getWindowHeight()*0.1 - 72) );
