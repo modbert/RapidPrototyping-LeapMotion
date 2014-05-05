@@ -9,6 +9,7 @@
 #include "cinder/ImageIo.h"
 #include "cinder/Font.h"
 #include "cinder/gl/Texture.h"
+#include "cinder/params/Params.h"
 
 #include <Windows.h>
 #include "portaudio.h"
@@ -258,18 +259,15 @@ private:
     char message[20];
 };
 
-
-
 class NoteVisualization : public AppNative {
   public:
-     void setup();
-     void update();
-     void draw();
-     void prepareSettings( Settings *settings );
-     void mouseMove(MouseEvent event );
-     int mMouseLoc;
-       vector<int> v;
-	   vector<int> turnOn;
+      void setup();
+      void update();
+      void draw();
+      void prepareSettings( Settings *settings );
+      int mMouseLoc;
+
+      vector<int> v;
 	   ci::ColorA       aColor;
 	   ci::ColorA       bColor;
 	   ci::ColorA       cColor;
@@ -281,23 +279,36 @@ class NoteVisualization : public AppNative {
 	   ci::ColorA       iColor;
       ci::ColorA       jColor;
 
-      gl::Texture	mTexture, mSimpleTexture, aTexture, bTexture, cTexture, dTexture, eTexture, fTexture, gTexture, hTexture, iTexture, jTexture;
+      gl::Texture	aTexture, bTexture, cTexture, dTexture, eTexture, fTexture, gTexture, hTexture, iTexture, jTexture;
+
+      Rectf bar[10];
 
    private:
       // Leap
-	   Leap::Frame				mFrame;
+	   Leap::Frame				   mFrame;
 	   LeapMotion::DeviceRef	mDevice;
-	   void 					onFrame( Leap::Frame frame );
+	   void 					      onFrame( Leap::Frame frame );
+      void                    onFocusLost( Leap::Frame frame );
       ci::CameraPersp			mCamera;
 
       int drawHands;
+      unsigned int lastGestureTime;
 
+      // Params
+	   float					mFrameRate;
+	   ci::params::InterfaceGl	mParams;
 };
+
+void NoteVisualization::onFocusLost( Leap::Frame frame )
+{
+   //shift = 0;
+}
+
 
 void NoteVisualization::prepareSettings( Settings *settings ) {
     settings->setWindowSize(800,600);
-    //settings->setFullScreen();
-    settings->setFrameRate(60.f);
+    settings->setFullScreen();
+    settings->setFrameRate(120.0f);
 }
 
 // Called when Leap frame data is ready
@@ -313,16 +324,19 @@ void NoteVisualization::onFrame( Leap::Frame frame )
 
       switch (gesture.type()) 
       {
-         case Leap::Gesture::TYPE_CIRCLE:
+      case Leap::Gesture::TYPE_KEY_TAP:
          {
-            drawHands = 1-drawHands;
+            //if (GetTickCount() > (lastGestureTime * 10000))
+            {
+               drawHands = 1-drawHands;
+            }
          }
          break;
          case Leap::Gesture::TYPE_SWIPE:
          {
            if (!record && !playback)
            {
-              //beginRecording();
+              beginRecording();
            }
          }
          break;
@@ -334,21 +348,31 @@ void NoteVisualization::onFrame( Leap::Frame frame )
 
 void NoteVisualization::setup()
 {
-   #if defined( CINDER_COCOA_TOUCH )
-	std::string normalFont( "Arial" );
-	std::string boldFont( "Arial-BoldMT" );
-	std::string differentFont( "AmericanTypewriter" );
-#else
-	std::string normalFont( "Arial" );
-	std::string boldFont( "Arial Bold" );
-	std::string differentFont( "Papyrus" );
-#endif
+	std::string normalFont( "Arial-BoldMT" );
    
    drawHands = 0;
 
-    for(int i=0; i<20; i++) {
-        v.push_back(0);
-    }
+   // Params
+	mFrameRate	= 0.0f;
+	mParams = params::InterfaceGl( "Params", Vec2i( 200, 105 ) );
+	mParams.addParam( "Frame rate",		&mFrameRate,							"", true );
+	mParams.addButton( "Quit",			bind( &NoteVisualization::quit, this ),			"key=q" );
+
+   for(int i=0; i<20; i++) 
+   {
+      v.push_back(0);
+   }
+
+   bar[1] = Rectf( 0, app::getWindowHeight()*0.9, app::getWindowWidth(), app::getWindowHeight() );
+   bar[0] = Rectf( 0, app::getWindowHeight()*0.8, app::getWindowWidth(), app::getWindowHeight()*0.9 );
+   bar[2] = Rectf( 0, app::getWindowHeight()*0.7, app::getWindowWidth(), app::getWindowHeight()*0.8 );
+   bar[3] = Rectf( 0, app::getWindowHeight()*0.6, app::getWindowWidth(), app::getWindowHeight()*0.7 );
+   bar[4] = Rectf( 0, app::getWindowHeight()*0.5, app::getWindowWidth(), app::getWindowHeight()*0.6 );
+   bar[5] = Rectf( 0, app::getWindowHeight()*0.4, app::getWindowWidth(), app::getWindowHeight()*0.5 );
+   bar[6] = Rectf( 0, app::getWindowHeight()*0.3, app::getWindowWidth(), app::getWindowHeight()*0.4 );
+   bar[7] = Rectf( 0, app::getWindowHeight()*0.2, app::getWindowWidth(), app::getWindowHeight()*0.3 );
+	bar[8] = Rectf( 0, app::getWindowHeight()/10, app::getWindowWidth(), app::getWindowHeight()*0.2 );
+   bar[9] = Rectf( 0, 0, app::getWindowWidth(), app::getWindowHeight()/10 );
 
 	aColor=ColorA(0.98,0.97,1);
 	bColor=ColorA(0.90,0.89,1);
@@ -370,92 +394,10 @@ void NoteVisualization::setup()
    // Start leap device
 	mDevice 		= Device::create();
 	mDevice->connectEventHandler( &NoteVisualization::onFrame, this );
+   //mDevice->connectEventHandler( &NoteVisualization::onFocusLost, this);
 
-   mDevice->getController()->enableGesture(Leap::Gesture::Type::TYPE_CIRCLE);
+   mDevice->getController()->enableGesture(Leap::Gesture::Type::TYPE_KEY_TAP);
    mDevice->getController()->enableGesture(Leap::Gesture::Type::TYPE_SWIPE);
-
-   TextLayout alayout;
-	alayout.setFont( Font( differentFont, 72 ) );
-	alayout.setColor( Color( 1, 1, 1 ) );
-	alayout.addCenteredLine( "B" );
-
-	Surface8u arendered = alayout.render( true, PREMULT );
-	aTexture = gl::Texture( arendered );
-
-	TextLayout blayout;
-	blayout.setFont( Font( differentFont, 72 ) );
-	blayout.setColor( Color( 1, 1, 1 ) );
-	blayout.addCenteredLine( "C" );
-
-	Surface8u brendered = blayout.render( true, PREMULT );
-	bTexture = gl::Texture( brendered );
-
-	TextLayout clayout;
-	clayout.setFont( Font( differentFont, 72 ) );
-	clayout.setColor( Color( 1, 1, 1 ) );
-	clayout.addCenteredLine( "D" );
-
-	Surface8u crendered = clayout.render( true, PREMULT );
-	cTexture = gl::Texture( crendered );
-
-	TextLayout dlayout;
-	dlayout.setFont( Font( differentFont, 72 ) );
-	dlayout.setColor( Color( 1, 1, 1 ) );
-	dlayout.addCenteredLine( "E" );
-
-	Surface8u drendered = dlayout.render( true, PREMULT );
-	dTexture = gl::Texture( drendered );
-
-	TextLayout elayout;
-	elayout.setFont( Font( differentFont, 72 ) );
-	elayout.setColor( Color( 1, 1, 1 ) );
-	elayout.addCenteredLine( "F" );
-
-	Surface8u erendered = elayout.render( true, PREMULT );
-	eTexture = gl::Texture( erendered );
-
-
-	TextLayout flayout;
-	flayout.setFont( Font( differentFont, 72 ) );
-	flayout.setColor( Color( 1, 1, 1 ) );
-	flayout.addCenteredLine( "G" );
-
-	Surface8u frendered = flayout.render( true, PREMULT );
-	fTexture = gl::Texture( frendered );
-
-
-	TextLayout glayout;
-	glayout.setFont( Font( differentFont, 72 ) );
-	glayout.setColor( Color( 1, 1, 1 ) );
-	glayout.addCenteredLine( "A" );
-
-	Surface8u grendered = glayout.render( true, PREMULT );
-	gTexture = gl::Texture( grendered );
-
-	TextLayout hlayout;
-	hlayout.setFont( Font( differentFont, 72 ) );
-	hlayout.setColor( Color( 1, 1, 1 ) );
-	hlayout.addCenteredLine( "B" );
-
-	Surface8u hrendered = hlayout.render( true, PREMULT );
-	hTexture = gl::Texture( hrendered );
-
-	TextLayout ilayout;
-	ilayout.setFont( Font( differentFont, 72 ) );
-	ilayout.setColor( Color( 1, 1, 1 ) );
-	ilayout.addCenteredLine( "C" );
-
-	Surface8u irendered = ilayout.render( true, PREMULT );
-	iTexture = gl::Texture( irendered );
-
-	TextLayout jlayout;
-	jlayout.setFont( Font( differentFont, 72 ) );
-	jlayout.setColor( Color( 1, 1, 1 ) );
-	jlayout.addCenteredLine( "D" );
-
-	Surface8u jrendered = jlayout.render( true, PREMULT );
-	jTexture = gl::Texture( jrendered );
-
 
    // Audio stuff
    Sine sine;
@@ -480,53 +422,35 @@ error:
     fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
 }
 
-void NoteVisualization::mouseMove( MouseEvent event ) 
-{
-    //mMouseLoc = event.getY();
-	//console() << mMouseLoc << std::endl;
-}
-
 void NoteVisualization::update()
 {
-    //int index = randInt(v.size());
-    //v[index]+=1;
-
    // Interact with first hand
 	const Leap::HandList& hands = mFrame.hands();
-	if ( hands.isEmpty() ) {
-		// nothing
-	} else {
+	if ( hands.isEmpty() )
+   {
+		shift = 0;
+	} 
+   else 
+   {
 		const Leap::Hand& hand = *hands.begin();
 
 		// Update hand position
-      //mMouseLoc = 630 - hand.palmPosition().y;
       shift = (hand.palmPosition().y)+35;
       mMouseLoc = 880-shift;
-
-      console() << shift << std::endl;
    }
-	
-	#if defined( CINDER_COCOA_TOUCH )
-	std::string normalFont( "Arial" );
-	std::string boldFont( "Arial-BoldMT" );
-	std::string differentFont( "AmericanTypewriter" );
-#else
-	std::string normalFont( "Arial" );
-	std::string boldFont( "Arial Bold" );
-	std::string differentFont( "Arial-BoldMT" );
-#endif
+
+	std::string normalFont( "Arial-BoldMT" );
 
    Color fontColor(1,1,1);
 
    if (record)
       fontColor = Color(1, 0, 0);
 
-		if(shift > 279 && shift < 289)
+	if(shift > 279 && shift < 289)
 	{
-		//console() << "Special thing happened!" << std::endl;
 		aColor = ColorA(0.16,1,0.05);
 		TextLayout alayout;
-		alayout.setFont( Font( differentFont, 72 ) );
+		alayout.setFont( Font( normalFont, 72 ) );
 		alayout.setColor( fontColor );
 		alayout.addCenteredLine( "B" );
 		Surface8u arendered = alayout.render( true, PREMULT );
@@ -536,38 +460,39 @@ void NoteVisualization::update()
 	{
 		aColor=ColorA(0.98,0.97,1);
 		TextLayout alayout;
-		alayout.setFont( Font( differentFont, 72 ) );
+		alayout.setFont( Font( normalFont, 72 ) );
 		alayout.setColor( fontColor );
 		alayout.addCenteredLine( "" );
 		Surface8u arendered = alayout.render( true, PREMULT );
 		aTexture = gl::Texture( arendered );
 	}
-		if(shift > 290 && shift < 299)
+
+	if(shift > 290 && shift < 299)
 	{
 		bColor = ColorA(1,0.32,.05);
 		TextLayout blayout;
-		blayout.setFont( Font( differentFont, 72 ) );
+		blayout.setFont( Font( normalFont, 72 ) );
 		blayout.setColor( fontColor );
 		blayout.addCenteredLine( "C" );
 		Surface8u brendered = blayout.render( true, PREMULT );
 		bTexture = gl::Texture( brendered );
-
 	}
 	else
 	{
 		bColor=ColorA(0.90,0.89,1);
 		TextLayout blayout;
-		blayout.setFont( Font( differentFont, 72 ) );
+		blayout.setFont( Font( normalFont, 72 ) );
 		blayout.setColor( fontColor );
 		blayout.addCenteredLine( "" );
 		Surface8u brendered = blayout.render( true, PREMULT );
 		bTexture = gl::Texture( brendered );
 	}
+
 	if(shift > 329 && shift < 341)
 	{
 		cColor = ColorA(0.21,0.07,1);
 		TextLayout clayout;
-		clayout.setFont( Font( differentFont, 72 ) );
+		clayout.setFont( Font( normalFont, 72 ) );
 		clayout.setColor( fontColor );
 		clayout.addCenteredLine( "D" );
 		Surface8u crendered = clayout.render( true, PREMULT );
@@ -578,17 +503,18 @@ void NoteVisualization::update()
 	{
 		cColor=ColorA(0.83,0.8,1);
 		TextLayout clayout;
-		clayout.setFont( Font( differentFont, 72 ) );
+		clayout.setFont( Font( normalFont, 72 ) );
 		clayout.setColor( fontColor );
 		clayout.addCenteredLine( "" );
 		Surface8u crendered = clayout.render( true, PREMULT );
 		cTexture = gl::Texture( crendered );
 	}
+
 	if(shift > 364 && shift < 376)
 	{
 		dColor = ColorA(0.9,0.1,1);
 		TextLayout dlayout;
-		dlayout.setFont( Font( differentFont, 72 ) );
+		dlayout.setFont( Font( normalFont, 72 ) );
 		dlayout.setColor( fontColor );
 		dlayout.addCenteredLine( "E" );
 		Surface8u drendered = dlayout.render( true, PREMULT );
@@ -598,18 +524,19 @@ void NoteVisualization::update()
 	{
 		dColor=ColorA(0.78,0.75,1);
 		TextLayout dlayout;
-		dlayout.setFont( Font( differentFont, 72 ) );
+		dlayout.setFont( Font( normalFont, 72 ) );
 		dlayout.setColor( fontColor );
 		dlayout.addCenteredLine( "" );
 		Surface8u drendered = dlayout.render( true, PREMULT );
 		dTexture = gl::Texture( drendered );
 
 	}
+
 	if(shift > 386 && shift < 398)
 	{
 		eColor = ColorA(1,0.83,0.05);
 		TextLayout elayout;
-		elayout.setFont( Font( differentFont, 72 ) );
+		elayout.setFont( Font( normalFont, 72 ) );
 		elayout.setColor( fontColor );
 		elayout.addCenteredLine( "F" );
 		Surface8u erendered = elayout.render( true, PREMULT );
@@ -619,17 +546,18 @@ void NoteVisualization::update()
 	{
 		eColor=ColorA(0.71,0.66,1);
 		TextLayout elayout;
-		elayout.setFont( Font( differentFont, 72 ) );
+		elayout.setFont( Font( normalFont, 72 ) );
 		elayout.setColor( fontColor );
 		elayout.addCenteredLine( "" );
 		Surface8u erendered = elayout.render( true, PREMULT );
 		eTexture = gl::Texture( erendered );
 	}
+
 	if(shift > 436 && shift < 448)
 	{
 		fColor = ColorA(0.25,1,0.5);
 		TextLayout flayout;
-		flayout.setFont( Font( differentFont, 72 ) );
+		flayout.setFont( Font( normalFont, 72 ) );
 		flayout.setColor( fontColor );
 		flayout.addCenteredLine( "G" );
 		Surface8u frendered = flayout.render( true, PREMULT );
@@ -639,17 +567,18 @@ void NoteVisualization::update()
 	{
 		fColor=ColorA(0.65,0.61,1);
 		TextLayout flayout;
-		flayout.setFont( Font( differentFont, 72 ) );
+		flayout.setFont( Font( normalFont, 72 ) );
 		flayout.setColor( fontColor );
 		flayout.addCenteredLine( "" );
 		Surface8u frendered = flayout.render( true, PREMULT );
 		fTexture = gl::Texture( frendered );
 	}
+
 	if(shift > 489 && shift < 501)
 	{
 		gColor = ColorA(1,0.09,0.29);
 		TextLayout glayout;
-		glayout.setFont( Font( differentFont, 72 ) );
+		glayout.setFont( Font( normalFont, 72 ) );
 		glayout.setColor( fontColor );
 		glayout.addCenteredLine( "A" );
 		Surface8u grendered = glayout.render( true, PREMULT );
@@ -659,17 +588,18 @@ void NoteVisualization::update()
 	{
 		gColor=ColorA(0.57,0.48,1);
 		TextLayout glayout;
-		glayout.setFont( Font( differentFont, 72 ) );
+		glayout.setFont( Font( normalFont, 72 ) );
 		glayout.setColor( fontColor );
 		glayout.addCenteredLine( "" );
 		Surface8u grendered = glayout.render( true, PREMULT );
 		gTexture = gl::Texture( grendered );
 	}
+
 	if(shift > 556 && shift < 568)
 	{
 		hColor = ColorA(1,0.5,0);
 		TextLayout hlayout;
-		hlayout.setFont( Font( differentFont, 72 ) );
+		hlayout.setFont( Font( normalFont, 72 ) );
 		hlayout.setColor( fontColor );
 		hlayout.addCenteredLine( "B" );
 		Surface8u hrendered = hlayout.render( true, PREMULT );
@@ -679,17 +609,18 @@ void NoteVisualization::update()
 	{
 		hColor=ColorA(0.45,0.39,1);
 		TextLayout hlayout;
-		hlayout.setFont( Font( differentFont, 72 ) );
+		hlayout.setFont( Font( normalFont, 72 ) );
 		hlayout.setColor( fontColor );
 		hlayout.addCenteredLine( "" );
 		Surface8u hrendered = hlayout.render( true, PREMULT );
 		hTexture = gl::Texture( hrendered );
 	}
+
 	if(shift > 594 && shift < 606)
 	{
 		iColor = ColorA(0.65,0.09,1);
 		TextLayout ilayout;
-		ilayout.setFont( Font( differentFont, 72 ) );
+		ilayout.setFont( Font( normalFont, 72 ) );
 		ilayout.setColor( fontColor );
 		ilayout.addCenteredLine( "C" );
 		Surface8u irendered = ilayout.render( true, PREMULT );
@@ -699,17 +630,18 @@ void NoteVisualization::update()
 	{
 		iColor=ColorA(0.36,0.31,1);
 		TextLayout ilayout;
-		ilayout.setFont( Font( differentFont, 72 ) );
+		ilayout.setFont( Font( normalFont, 72 ) );
 		ilayout.setColor( fontColor );
 		ilayout.addCenteredLine( "" );
 		Surface8u irendered = ilayout.render( true, PREMULT );
 		iTexture = gl::Texture( irendered );
 	}
+
 	if(shift > 679 && shift < 691)
 	{
 		jColor = ColorA(0,0,0);
 		TextLayout jlayout;
-		jlayout.setFont( Font( differentFont, 72 ) );
+		jlayout.setFont( Font( normalFont, 72 ) );
 		jlayout.setColor( fontColor );
 		jlayout.addCenteredLine( "D" );
 		Surface8u jrendered = jlayout.render( true, PREMULT );
@@ -719,7 +651,7 @@ void NoteVisualization::update()
 	{
 		jColor=ColorA(0.26,0.20,1);
 		TextLayout jlayout;
-		jlayout.setFont( Font( differentFont, 72 ) );
+		jlayout.setFont( Font( normalFont, 72 ) );
 		jlayout.setColor( fontColor );
 		jlayout.addCenteredLine( "" );
 		Surface8u jrendered = jlayout.render( true, PREMULT );
@@ -729,129 +661,76 @@ void NoteVisualization::update()
 
 void NoteVisualization::draw()
 {
-      // clear screen
-      glClearColor( 0.1f, 0.1f, 0.1f, 1.0f );
-	   glClear( GL_COLOR_BUFFER_BIT );
-	   gl::setMatricesWindow( getWindowSize() );
-	   gl::enableAlphaBlending( PREMULT );
+   // clear screen
+   glClearColor( 0.1f, 0.1f, 0.1f, 1.0f );
+	glClear( GL_COLOR_BUFFER_BIT );
+	gl::setMatricesWindow( getWindowSize() );
+	gl::enableAlphaBlending( PREMULT );
 
+	gl::color(jColor);
+   gl::drawSolidRect(bar[9]);
+	
+   gl::color(iColor);
+   gl::drawSolidRect(bar[8]);
+	
+	gl::color(hColor);
+   gl::drawSolidRect(bar[7]);
 
-		Rectf bar9 = Rectf( 0, 0, app::getWindowWidth(), app::getWindowHeight()/10 );
-		gl::color(jColor);
-        gl::drawSolidRect(bar9);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar9);
+	gl::color(gColor);
+   gl::drawSolidRect(bar[6]);
+	
+	gl::color(fColor);
+   gl::drawSolidRect(bar[5]);
 
-		Rectf bar8 = Rectf( 0, app::getWindowHeight()/10, app::getWindowWidth(), app::getWindowHeight()*0.2 );
-		gl::color(iColor);
-        gl::drawSolidRect(bar8);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar8);
+	gl::color(eColor);
+   gl::drawSolidRect(bar[4]);
 
-		Rectf bar7 = Rectf( 0, app::getWindowHeight()*0.2, app::getWindowWidth(), app::getWindowHeight()*0.3 );
-		gl::color(hColor);
-        gl::drawSolidRect(bar7);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar7);
+	gl::color(dColor);
+   gl::drawSolidRect(bar[3]);
+	
+	gl::color(cColor);
+   gl::drawSolidRect(bar[2]);
+	
+	gl::color(bColor);
+   gl::drawSolidRect(bar[0]);
 
-		Rectf bar6 = Rectf( 0, app::getWindowHeight()*0.3, app::getWindowWidth(), app::getWindowHeight()*0.4 );
-		gl::color(gColor);
-        gl::drawSolidRect(bar6);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar6);
-
-		Rectf bar5 = Rectf( 0, app::getWindowHeight()*0.4, app::getWindowWidth(), app::getWindowHeight()*0.5 );
-		gl::color(fColor);
-        gl::drawSolidRect(bar5);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar5);
-
-		Rectf bar4 = Rectf( 0, app::getWindowHeight()*0.5, app::getWindowWidth(), app::getWindowHeight()*0.6 );
-		gl::color(eColor);
-        gl::drawSolidRect(bar4);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar4);
-
-		Rectf bar3 = Rectf( 0, app::getWindowHeight()*0.6, app::getWindowWidth(), app::getWindowHeight()*0.7 );
-		gl::color(dColor);
-        gl::drawSolidRect(bar3);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar3);
-
-		Rectf bar2 = Rectf( 0, app::getWindowHeight()*0.7, app::getWindowWidth(), app::getWindowHeight()*0.8 );
-		gl::color(cColor);
-        gl::drawSolidRect(bar2);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar2);
-
-		Rectf bar = Rectf( 0, app::getWindowHeight()*0.8, app::getWindowWidth(), app::getWindowHeight()*0.9 );
-		gl::color(bColor);
-        gl::drawSolidRect(bar);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar);
-
-		Rectf bar1 = Rectf( 0, app::getWindowHeight()*0.9, app::getWindowWidth(), app::getWindowHeight() );
-		gl::color(aColor);
-        gl::drawSolidRect(bar1);
-        gl::color(0,0,0);
-        gl::drawStrokedRect(bar1);
+	gl::color(aColor);
+   gl::drawSolidRect(bar[1]);
 
 	gl::color( Color::white() );
-	gl::draw( aTexture, Vec2f( 0,app::getWindowHeight() - 72) );
-
-	gl::color( Color::white() );
+	gl::draw( aTexture, Vec2f( 0, app::getWindowHeight()     - 72) );
 	gl::draw( bTexture, Vec2f( 0, app::getWindowHeight()*0.9 - 72) );
-
-	gl::color( Color::white() );
 	gl::draw( cTexture, Vec2f( 0, app::getWindowHeight()*0.8 - 72) );
-
-	gl::color( Color::white() );
 	gl::draw( dTexture, Vec2f( 0, app::getWindowHeight()*0.7 - 72) );
-
-	gl::color( Color::white() );
 	gl::draw( eTexture, Vec2f( 0, app::getWindowHeight()*0.6 - 72) );
-
-	gl::color( Color::white() );
 	gl::draw( fTexture, Vec2f( 0, app::getWindowHeight()*0.5 - 72) );
-
-	gl::color( Color::white() );
 	gl::draw( gTexture, Vec2f( 0, app::getWindowHeight()*0.4 - 72) );
-
-	gl::color( Color::white() );
 	gl::draw( hTexture, Vec2f( 0, app::getWindowHeight()*0.3 - 72) );
+	gl::draw( iTexture, Vec2f( 0, app::getWindowHeight()*0.2 - 72) );
+	gl::draw( jTexture, Vec2f( 0, app::getWindowHeight()*0.1 - 72) );
 
-	gl::color( Color::white() );
-	gl::draw( iTexture, Vec2f( 0, app::getWindowHeight()* 0.2  - 72) );
-
-	gl::color( Color::white() );
-	gl::draw( jTexture, Vec2f( 0, app::getWindowHeight()* 0.1 - 72 ) );
-
-      gl::pushMatrices();
-
-
+   // Draw 3D hands if desired
    if (drawHands == 0)
    {
       return;
    }
 
-      // Clear window
-	gl::setViewport( getWindowBounds() );
-	//gl::clear( Colorf::black() );
-	gl::setMatrices( mCamera );
+   gl::pushMatrices();
 
-   //gl::enableDepthRead();
-	//gl::enableDepthWrite();
+   // Clear window
+	gl::setViewport( getWindowBounds() );
+	gl::setMatrices( mCamera );
 	
 	// Iterate through hands
 	const Leap::HandList& hands = mFrame.hands();
-	for ( Leap::HandList::const_iterator handIter = hands.begin(); handIter != hands.end(); ++handIter ) {
-		const Leap::Hand& hand = *handIter;
+	for ( Leap::HandList::const_iterator handIter = hands.begin(); handIter != hands.end(); ++handIter ) 
+   {
+      const Leap::Hand& hand = *handIter;
 
-		
-
-		// Pointables
+		// Pointables (fingers)
 		const Leap::PointableList& pointables = hand.pointables();
-		for ( Leap::PointableList::const_iterator pointIter = pointables.begin(); pointIter != pointables.end(); ++pointIter ) {
+		for ( Leap::PointableList::const_iterator pointIter = pointables.begin(); pointIter != pointables.end(); ++pointIter )
+      {
 			const Leap::Pointable& pointable = *pointIter;
 
 			Vec3f dir		= LeapMotion::toVec3f( pointable.direction() );
@@ -859,22 +738,17 @@ void NoteVisualization::draw()
 			Vec3f tipPos	= LeapMotion::toVec3f( pointable.tipPosition() );
 			Vec3f basePos	= tipPos + dir * length;
 			
-
 			gl::drawColorCube( tipPos, Vec3f( 20, 20, 20 ) );
 			gl::color( ColorAf::gray( 0.8f ) );
 			gl::drawLine( basePos, tipPos );
 
          // Draw palm
-		gl::color(1, .2, .4, 1);
-		gl::drawSphere(LeapMotion::toVec3f(hand.palmPosition()),20,12);
+		   gl::color(1, .2, .4, 1);
+		   gl::drawSphere(LeapMotion::toVec3f(hand.palmPosition()),20,12);
 		}
 	}
 
-   //gl::disableDepthRead();
-	//gl::disableDepthWrite();
-
    gl::popMatrices();
-
 }
 
 CINDER_APP_NATIVE( NoteVisualization, RendererGl )

@@ -152,26 +152,44 @@ void UiApp::draw()
 		{
 			gl::color( ColorAf( 0.0f, 0.8f, 0.0f ) );
 
-         // Launch theremin program
+         SHELLEXECUTEINFO ShExecInfo = {0};
+         ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+         ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+         ShExecInfo.hwnd = NULL;
+         ShExecInfo.lpVerb = NULL;              
+         ShExecInfo.lpParameters = L"";   
+         ShExecInfo.lpDirectory = NULL;
+         ShExecInfo.nShow = SW_SHOW;
+         ShExecInfo.hInstApp = NULL; 
+
+         // Launch note visualization program
          if (mButtonState[0])
          {
             timer.stop();
             mButtonState[0] = false;
             anyPressed = false;
 
-            SHELLEXECUTEINFO ShExecInfo = {0};
-            ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
-            ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-            ShExecInfo.hwnd = NULL;
-            ShExecInfo.lpVerb = NULL;
-            ShExecInfo.lpFile = L"c:\\test\\PortAudioCPP.exe";        
-            ShExecInfo.lpParameters = L"";   
-            ShExecInfo.lpDirectory = NULL;
-            ShExecInfo.nShow = SW_SHOW;
-            ShExecInfo.hInstApp = NULL; 
-
+            ShExecInfo.lpFile = L"C:\\LeapMusic\\NoteVisualization.exe";
             ShellExecuteEx(&ShExecInfo);
             WaitForSingleObject(ShExecInfo.hProcess,INFINITE);
+         }
+
+         // Launch ribbon visualization program
+         if (mButtonState[1])
+         {
+            timer.stop();
+            mButtonState[1] = false;
+            anyPressed = false;
+
+            ShExecInfo.lpFile = L"C:\\LeapMusic\\RibbonVisualization.exe";
+            ShellExecuteEx(&ShExecInfo);
+            WaitForSingleObject(ShExecInfo.hProcess,INFINITE);
+         }
+
+         // Quit
+         if (mButtonState[2])
+         {
+            quit();
          }
 		}
 		else
@@ -204,17 +222,6 @@ void UiApp::prepareSettings( Settings *settings )
 {
 	settings->setWindowSize( 1024, 768 );
 	settings->setFrameRate( 60.0f );
-}
-
-// Take screen shot
-void UiApp::screenShot()
-{
-#if defined( CINDER_MSW )
-	fs::path path = getAppPath();
-#else
-	fs::path path = getAppPath().parent_path();
-#endif
-	writeImage( path / fs::path( "frame" + toString( getElapsedFrames() ) + ".png" ), copyWindowSurface() );
 }
 
 // Handles window resize
@@ -301,7 +308,6 @@ void UiApp::setup()
 	mParams = params::InterfaceGl( "Params", Vec2i( 200, 105 ) );
 	mParams.addParam( "Frame rate",		&mFrameRate,						"", true );
 	mParams.addParam( "Full screen",	&mFullScreen,						"key=f"		);
-	mParams.addButton( "Screen shot",	bind( &UiApp::screenShot, this ),	"key=space" );
 	mParams.addButton( "Quit",			bind( &UiApp::quit, this ),			"key=q" );
 
 	// Run resize to initialize layout

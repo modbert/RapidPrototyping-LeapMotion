@@ -431,10 +431,10 @@ void TracerApp::onFrame( Leap::Frame frame )
 // Prepare window
 void TracerApp::prepareSettings( Settings* settings )
 {
-	settings->setFrameRate( 60.0f );
+	settings->setFrameRate( 120.0f );
 	settings->setResizable( false );
 	settings->setWindowSize( 1024, 768 );
-   //settings->setFullScreen();
+   settings->setFullScreen();
 }
 
 // Take screen shot
@@ -542,6 +542,11 @@ void TracerApp::update()
 
 	// Process hand data
 	const Leap::HandList& hands = mFrame.hands();
+   if (hands.isEmpty())
+   {
+      shift = 0;
+   }
+   
 	for ( Leap::HandList::const_iterator handIter = hands.begin(); handIter != hands.end(); ++handIter ) {
 		const Leap::Hand& hand = *handIter;
 
